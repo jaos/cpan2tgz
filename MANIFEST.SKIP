@@ -2,3 +2,4 @@
 CVS\/.*
 .*.bak
 Makefile$
+buildslackpkg.sh$
