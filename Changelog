@@ -1,6 +1,5 @@
 
 0.2 Nov 17, 2004
- * added --tmp (temp build directory) and --pkgdir (directory to place packages)
  * fixed slack-required generated list to show the actual package names as
    created, like perl-timedate instead of perl-date-parse and perl-time-zone
  * fixed bug where -ignoreinstalled was being ignored
