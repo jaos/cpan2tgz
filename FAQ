@@ -6,6 +6,7 @@ Frequenty Asked Questions:
 3.  How do I build prerequisite modules automatically?
 4.  Why do I get "cc: not found" when I build modules?
 5.  Can I use it to update all the installed Perl modules?
+6.  Why doesn't this work on 9.1 and below?
 
 
 
@@ -38,5 +39,11 @@ Frequenty Asked Questions:
    perl -MCPAN -e 'CPAN::Shell->install(CPAN::Shell->r)'
    # or to see just the versions that have updates
    perl -e 'use CPAN; CPAN::Shell->r;'
+
+
+6.  Why doesn't this work on 9.1 and below?
+
+ cpan2tgz requires the ExtUtils::MakeMaker package support DESTDIR.  Upgrading
+ ExtUtils::MakeMaker manually seems to take care of this.
 
 
