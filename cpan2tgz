@@ -226,12 +226,10 @@ sub usage {
 	print "Jason Woodward <woodwardj at jaos dot org>\n";
 	print "Usage: $0 [option(s)] [modules(s)]\n";
 	print "  --recursive        build required modules","\n";
-	print "                     this requires installing required modules\n";
-	print "                     as it traverses the dependency tree (DANGEROUS)\n";
-	print "  --ignoreinstalled  don't build installed required modules","\n";
-	print "                     this only works with --recursive\n";
+	print "                     this may require installing required modules\n";
+	print "  --ignoreinstalled  build installed required modules even if present","\n";
+	print "                     on the system.  This only works with --recursive\n";
 	print "  --install          always install the generated package\n";
-	print "                     this is on for --recursive by default\n";
 
 	exit(1);
 }
