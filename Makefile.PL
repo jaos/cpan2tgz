@@ -13,8 +13,5 @@ WriteMakefile(
 		'CPAN' => 0,
 		'Getopt::Long' => 0,
 	},
-	dist => {
-		COMPRESS => "gzip -9 -vf",
-	},
 );
 
