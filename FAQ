@@ -4,6 +4,7 @@ Frequenty Asked Questions:
 1.  What is cpan2tgz?
 2.  Where are the created packages placed?
 3.  How do I build prerequisite modules automatically?
+4.  Why do I get "cc: not found" when I build modules?
 
 
 
@@ -21,5 +22,10 @@ Frequenty Asked Questions:
 
  Use the --recursive command line option.  This will install the generated
  packages in order to satisfy dependencies as packages are built.
+
+
+4.  Why do I get "cc: not found" when I build modules?
+
+ Try symlinking /usr/bin/gcc to /usr/bin/cc.
 
 
