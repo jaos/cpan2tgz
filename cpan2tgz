@@ -143,7 +143,7 @@ sub do_package {
 	system("cd $dest_dir && rm build.sh");
 
 	# generate the slack-required file
-	if( @deps > 0 ){
+	if( scalar(keys %{$pack->prereq_pm()}) > 0 ){
 		open(my $required_fh,">$dest_dir/install/slack-required") or die "Failed to open slack-required for writing: $!";
 		# use the hashref here so we can get the version
 		my $deps = $pack->prereq_pm();
