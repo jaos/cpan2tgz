@@ -1,4 +1,7 @@
 
+0.2 Nov 16, 2004
+ * formatting updates of system() calls
+
 0.1 Nov 16, 2004
  * moved manpage into inline pod within cpan2tgz script.
    MakeMaker will generate the man pages from here
