@@ -1,5 +1,6 @@
 
 0.1 Nov 16, 2004
+ * added Makefile.PL and MANIFEST
  * --ignoreinstalled now truncates dependency list
  * added --install option
  * added manpage
