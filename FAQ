@@ -5,8 +5,7 @@ Frequenty Asked Questions:
 2.  Where are the created packages placed?
 3.  How do I build prerequisite modules automatically?
 4.  Why do I get "cc: not found" when I build modules?
-5.  Why do I get a make ERROR when it tries to install perl-5.x.x?
-6.  Can I use it to update all the installed Perl modules?
+5.  Can I use it to update all the installed Perl modules?
 
 
 
@@ -31,12 +30,7 @@ Frequenty Asked Questions:
  Try symlinking /usr/bin/gcc to /usr/bin/cc.
 
 
-5.  Why do I get a make ERROR when it tries to install perl-5.x.x?
-
- FIXME
-
-
-6.  Can I use it to update all the installed Perl modules?
+5.  Can I use it to update all the installed Perl modules?
 
  No, but from the CPAN pod:
 
