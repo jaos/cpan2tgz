@@ -1,4 +1,10 @@
 
+0.3 Jan 14, 2005
+ * added Slackware 10.0 Perl to slack-required
+ * added ExtUtils::MakeMaker 6.25 as PREREQ_PM
+ * added FAQ concerning ExtUtils::MakeMaker DESTDIR support for Slackware 9.1 and
+   below.
+
 0.2 Nov 17, 2004
  * fixed slack-required generated list to show the actual package names as
    created, like perl-timedate instead of perl-date-parse and perl-time-zone
