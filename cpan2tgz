@@ -75,6 +75,10 @@ sub do_package {
 	# do an initial make so that we can get the dep info
 	my $pack = $CPAN::META->instance('CPAN::Distribution',$module->cpan_file());
 	die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
+	if( $pack->isa_perl() ){
+		print STDERR "\nWill not install ",$module->id()," because it is contained within Perl proper.\n";
+		return;
+	}
 	eval { $pack->make() or die $!; };
 	if( $@ ){
 		print "make ERROR [$module_name]: $!\n";
@@ -84,10 +88,15 @@ sub do_package {
 	my @deps;
 	if( $ignore_installed_deps ){
 		# only get the deps that are not installed
-		@deps = grep { m/\w+/; } map { eval "no warnings 'all'; use $_;"; if($@){ $_ } } keys %{$pack->prereq_pm()};
+		@deps = grep { $_ && m/\w+/; }
+			map { if($PACKAGE_CACHE_LIST{$_}){undef}else{$_} }
+			keys %{$pack->prereq_pm()};
 	}else{
 		# get all dependencies
-		@deps = keys %{$pack->prereq_pm()};
+		@deps = grep { $_ && m/\w+/; }
+			map { if($PACKAGE_CACHE_LIST{$_}){undef}else{$_} }
+			map { eval "no warnings 'all'; use $_;"; if($@){ $_ } }
+			keys %{$pack->prereq_pm()};
 	}
 	# look at module prerequisites
 	if( @deps > 0 ){
@@ -205,7 +214,7 @@ SCRIPT
 	die "Failed to build package $pkg_name: $!" unless ( -f "/usr/src/$pkg_name" );
 
 	# install the package
-	if( $recursive or $install_after_building ){
+	if( $install_after_building ){
 		system("installpkg /usr/src/$pkg_name");
 	}
 
@@ -262,11 +271,11 @@ Download the package only.  Do not install/upgrade.  Packages are downloaded to 
 
 =item B<--ignoreinstalled>
 
-This option specifies not to build packages for required modules if the module is found to be present and installed on the system.  This only works in conjunction with --recursive.
+This option specifies to build packages for required modules even if the module is found to be present and installed on the system.  This only works in conjunction with --recursive.
 
 =item B<--install>
 
-Always install the generated package.  This is the default behavior with --recursive.
+Always install the generated package.  This is useful with --recursive to satisfy dependencies.
 
 =item B<module(s)>
 

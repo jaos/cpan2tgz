@@ -1,5 +1,10 @@
 
 0.2 Nov 17, 2004
+ * -recursive now only installs the module when --install is specified
+ * inverted meaning of ignoreinstalled, so now ignoreinstalled will build
+   up to date packages for modules already present on the system
+ * added check to skip dependency when required module is contained within the
+   Perl source
  * generate the doinst.sh to fix perllocal.pod by concatenating it's contents
    from doinst.sh and removing it from the build directory before the pkg is made
  * fixed dependency names for Perl modules to follow perl-${module/::/-}
