@@ -2,8 +2,9 @@ Changelog
 COPYING
 cpan2tgz
 cpan2tgz.1
+cpan2tgz.1p
 FAQ
-Makefile
+Makefile.old
 Makefile.PL
 MANIFEST
 MANIFEST.SKIP

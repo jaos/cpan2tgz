@@ -1,3 +1,4 @@
 .*.swp
 CVS\/.*
 .*.bak
+Makefile$
