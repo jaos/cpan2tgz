@@ -9,7 +9,7 @@ WriteMakefile(
 	),
 	EXE_FILES => [ "cpan2tgz" ],
 	PREREQ_PM => { # e.g., Module::Name => 1.1
-		'ExtUtils::MakeMaker' => 6.25,
+		'ExtUtils::MakeMaker' => 6.17,
 		'Config' => 0,
 		'CPAN' => 0,
 		'Getopt::Long' => 0,

@@ -1,5 +1,6 @@
 
-0.3 Jan 14, 2005
+0.3 Feb 07, 2005
+ * fixed minimum MakeMaker requirement
  * added Slackware 10.0 Perl to slack-required
  * added ExtUtils::MakeMaker 6.25 as PREREQ_PM
  * added FAQ concerning ExtUtils::MakeMaker DESTDIR support for Slackware 9.1 and
