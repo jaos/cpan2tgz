@@ -1,7 +1,10 @@
 Changelog
 COPYING
-README
-FAQ
 cpan2tgz
 cpan2tgz.1
+FAQ
+Makefile
 Makefile.PL
+MANIFEST
+MANIFEST.SKIP
+README
