@@ -271,4 +271,12 @@ http://software.jaos.org/
 
 installpkg(8), makepkg(8), removepkg(8), pkgtool(8), upgradepkg(8),
 
+=pod OSNAMES
+
+any
+
+=pod SCRIPT CATEGORIES
+
+Unix/System_administration
+
 =cut
