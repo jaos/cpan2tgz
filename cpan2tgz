@@ -26,6 +26,8 @@ use Config;
 use CPAN;
 use Getopt::Long;
 
+our $VERSION = "0.1";
+
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
 my (%PACKAGE_CACHE_LIST,$recursive,$install_after_building,$ignore_installed_deps);
 
