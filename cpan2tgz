@@ -24,7 +24,6 @@ use strict;
 use warnings;
 use Config;
 use CPAN;
-use Data::Dumper;
 use Getopt::Long;
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
