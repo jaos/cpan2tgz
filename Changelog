@@ -1,5 +1,6 @@
 
 0.1 Nov 16, 2004
+ * binary packages are now generated with arch from perl -V:archname
  * added -ignoreinstalled option
  * added -recursive option 
  * filled out usage information
