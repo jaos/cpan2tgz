@@ -103,13 +103,13 @@ sub do_package {
 	print $script_fh "cd $dest_dir\n";
 	print $script_fh "find . | xargs file | grep \"executable\" | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null\n";
 	print $script_fh "find . | xargs file | grep \"shared object\" | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null\n";
-	print $script_fh "find ./usr/share/man/ -name \'*.3\' -exec gzip -9 {} \\;\n";
-	print $script_fh "find ./usr/share/man/ -name \'*.1\' -exec gzip -9 {} \\;\n";
+	print $script_fh "find ./usr/share/man/ -name \'*.3\' -exec gzip -9 {} \\; 2> /dev/null\n";
+	print $script_fh "find ./usr/share/man/ -name \'*.1\' -exec gzip -9 {} \\; 2> /dev/null\n";
 	print $script_fh "mv ./usr/share/man ./usr/\n" if( -d "$dest_dir/usr/share/man" );
 	print $script_fh "chown -R root.bin ./usr/bin\n" if( -d "$dest_dir/usr/bin" );
 	print $script_fh "chmod 755 ./usr/bin/*\n" if( -d "$dest_dir/usr/bin");
-	print $script_fh "chmod 644 ./usr/man/man?/*\n";
-	print $script_fh "rmdir ./usr/share\n";
+	print $script_fh "chmod 644 ./usr/man/man?/*\n" if( -d "$dest_dir/usr/man" );
+	print $script_fh "rmdir ./usr/share\n" if( -d "$dest_dir/usr/share" );
 	print $script_fh "mkdir ./install\n";
 	close($script_fh);
 	system("cd $dest_dir && sh build.sh");
