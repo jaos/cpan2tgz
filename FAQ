@@ -1,0 +1,25 @@
+
+Frequenty Asked Questions:
+
+1.  What is cpan2tgz?
+2.  Where are the created packages placed?
+3.  How do I build prerequisite modules automatically?
+
+
+
+1.  What is cpan2tgz?
+
+ cpan2tgz is a program to create slackware packages from CPAN distributions.
+
+
+2.  Where are the created packages placed?
+
+ Created packages are placed in /usr/src/.
+
+
+3.  How do I build prerequisite modules automatically?
+
+ Use the --recursive command line option.  This will install the generated
+ packages in order to satisfy dependencies as packages are built.
+
+
