@@ -5,7 +5,7 @@ WriteMakefile(
 	VERSION_FROM => "cpan2tgz",
 	$] < 5.005 ? () : (
 		AUTHOR => 'Jason Woodward <woodwardj@jaos.org>',
-		ABSTRACT_FROM => "cpan2tgz",
+		ABSTRACT => "create Slackware packages from CPAN Perl module distributions",
 	),
 	EXE_FILES => [ "cpan2tgz" ],
 	PREREQ_PM => { # e.g., Module::Name => 1.1

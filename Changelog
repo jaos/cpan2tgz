@@ -1,5 +1,7 @@
 
 0.1 Nov 16, 2004
+ * moved manpage into inline pod within cpan2tgz script.
+   MakeMaker will generate the man pages from here
  * added Makefile.PL and MANIFEST
  * --ignoreinstalled now truncates dependency list
  * added --install option

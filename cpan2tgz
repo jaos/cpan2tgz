@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # 
-# cpan2tgz  create slackware packages from cpan distributions 
+# cpan2tgz - create slackware packages from cpan distributions 
 # 
 # Jason Woodward
 # woodwardj at jaos dot org
@@ -218,3 +218,57 @@ sub clear_build_dir {
 	system("rm -r $dest_dir/*") if ( -d $dest_dir );
 	system("rmdir $dest_dir") if ( -d $dest_dir );
 }
+
+1;
+
+__END__
+
+=head1 NAME
+
+cpan2tgz - create Slackware GNU/Linux packages from CPAN Perl module distributions
+
+=head1 SYNOPSIS
+
+cpan2tgz [option(s)] [module(s)]
+
+options: [--recursive] [--ignoreinstalled] [--install]
+
+=head1 DESCRIPTION
+
+cpan2tgz is a tool to create Slackware GNU/Linux packages from CPAN Perl module distributions.  cpan2tgz was inspired by cpan2rpm.
+
+=head1 OPTIONS
+
+=over
+
+=item B<--recursive>
+
+Download the package only.  Do not install/upgrade.  Packages are downloaded to /var/slapt-get/.   This will build required modules and then install them as it traverses the dependency tree of the specified Perl module.  This can be dangerous.  It might be best to install one at a time.
+
+=item B<--ignoreinstalled>
+
+This option specifies not to build packages for required modules if the module is found to be present and installed on the system.  This only works in conjunction with --recursive.
+
+=item B<--install>
+
+Always install the generated package.  This is the default behavior with --recursive.
+
+=item B<module(s)>
+
+A series of Perl modules to install, ie Data::Dumper
+
+=head1 NOTES
+
+cpan2tgz uses the CPAN Perl module.  A working CPAN/Config.pm is assumed.  If CPAN has not been initialized prior to running cpan2tgz, it will be initialized on the first run.
+
+=head1 AUTHOR
+
+Jason Woodward <woodwardj@jaos.org>
+
+http://software.jaos.org/
+
+=head1 SEE ALSO
+
+installpkg(8), makepkg(8), removepkg(8), pkgtool(8), upgradepkg(8),
+
+=cut
