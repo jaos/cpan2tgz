@@ -46,7 +46,10 @@ sub do_package {
 	my ($module_name) = @_;
 	return unless $module_name;
 	my $module = CPAN::Shell->expand('Module',$module_name);
-	die "Failed to find $module_name: $!" unless $module;
+	unless($module){
+		print STDERR "\nFailed to find module: $module_name","\n";
+		exit(1);
+	}
 
 	$PACKAGE_CACHE_LIST{$module->id()} = 1;
 
