@@ -171,7 +171,10 @@ sub usage {
 	print "Jason Woodward <woodwardj at jaos dot org>\n";
 	print "Usage: $0 [option(s)] [modules(s)]\n";
 	print "  --recursive        build required modules","\n";
+	print "                     this requires installing required modules\n";
+	print "                     as it traverses the dependency tree (DANGEROUS)\n";
 	print "  --ignoreinstalled  don't build installed required modules","\n";
+	print "                     this only works with --recursive\n";
 	exit(1);
 }
 
