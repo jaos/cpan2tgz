@@ -33,6 +33,7 @@ usage() unless
 	GetOptions(
 		"recursive" => \$recursive,
 		"ignoreinstalled" => \$ignore_installed_deps,
+		"install"	=> \$install_after_building,
 	);
 
 usage() unless (scalar(@ARGV) > 0);
@@ -44,14 +45,17 @@ foreach my $mod (@ARGV){
 sub do_package {
 	my ($module_name) = @_;
 	return unless $module_name;
+
 	my $module = CPAN::Shell->expand('Module',$module_name);
 	unless($module){
 		print STDERR "\nFailed to find module: $module_name","\n";
 		exit(1);
 	}
 
+	print "\n\nProcessing $module_name...\n\n";
 	$PACKAGE_CACHE_LIST{$module->id()} = 1;
 
+	# try to extract some info about the module
 	my $pkg_name = "perl-" . lc((split('/',$module->cpan_file))[-1]);
 	my $final_pkg_version = (split('-',$pkg_name))[-1];
 	(my $final_pkg_name = $pkg_name) =~ s/\-$final_pkg_version//;
@@ -66,44 +70,62 @@ sub do_package {
 
 	my $dest_dir = "/tmp/" . $module->id();
 
+	# do an initial make so that we can get the dep info
 	my $pack = $CPAN::META->instance('CPAN::Distribution',$module->cpan_file());
 	die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
 	eval { $pack->make() or die $!; };
 	if( $@ ){
-		print "make ERROR: $!\n";
+		print "make ERROR [$module_name]: $!\n";
 		exit(1);
 	}
 
-	if( scalar( keys %{$pack->prereq_pm()} ) > 0 ){
+	my @deps;
+	if( $ignore_installed_deps ){
+		# only get the deps that are not installed
+		@deps = grep { m/\w+/; } map { eval "no warnings 'all'; use $_;"; if($@){ $_ } } keys %{$pack->prereq_pm()};
+	}else{
+		# get all dependencies
+		@deps = keys %{$pack->prereq_pm()};
+	}
+	# look at module prerequisites
+	if( @deps > 0 ){
 		if($recursive){
-			print "\n\nhandling " . scalar(keys %{$pack->prereq_pm()})
-				. " deps for $module_name: ",join(", ",keys %{$pack->prereq_pm()}),"\n\n";
-			foreach my $dep ( keys %{$pack->prereq_pm()} ){
+			print "\n\nhandling " . scalar(@deps)
+				. " deps for $module_name: ",join(", ",@deps),"\n\n";
+			sleep(1);
+			foreach my $dep ( @deps ){
 				local $@;
 				next if defined $PACKAGE_CACHE_LIST{$dep};
 				print "FIXME: I don't deal with xsloader b/c make ?n/a?\n",next if $dep =~ m/xsloader/i;
-				eval "use $dep;";
-				next if ( $ignore_installed_deps && $@ );
+				eval "no warnings 'all';use $dep;";
+				next if ( $ignore_installed_deps && !$@ );
 				do_package($dep);
 			}
 		}else{
-			print "\n\nStopping.\n[", $module->id(), "] requires ", join(", ", keys %{$pack->prereq_pm()}),"\n";
+			print "\n\nStopping.\n[", $module->id(), "] requires ", join(", ",@deps),"\n";
 			exit(1);
 		}
 	}
 
 	clear_build_dir($dest_dir);
+	
+	# here we do steps to cleanup source before we build (per LinuxPackages.net perfect packages instructions)
 	system("cd " . $pack->dir() . " && chown -R root.root .");
 	system("cd " . $pack->dir() . " && find . -perm 777 -exec chmod 755 {} \\;");
 	system("cd " . $pack->dir() . " && find . -perm 555 -exec chmod 755 {} \\;");
 	system("cd " . $pack->dir() . " && find . -perm 444 -exec chmod 644 {} \\;");
 	system("cd " . $pack->dir() . " && find . -perm 666 -exec chmod 644 {} \\;");
 	system("cd " . $pack->dir() . " && find . -perm 664 -exec chmod 644 {} \\;");
+
+	# install to the package build dir
 	system("cd " . $pack->dir() . " && make install DESTDIR=$dest_dir");
 	die "Failed to install to $dest_dir: $!" unless ( -d $dest_dir );
+
+	# copy documentation to the package build dir
 	system("cd $dest_dir && mkdir -p ./usr/doc/$final_pkg_name-" . $module->cpan_version);
 	system("cd " . $pack->dir() . " && find . -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*' -o -iregex '.*license.*' -o -iregex '.*copying.*' -o -iregex '.*install.*' -o -iregex '.*\.txt' -o -iregex '.*\.html' |xargs -r -iZ cp Z $dest_dir/usr/doc/$final_pkg_name-" . $module->cpan_version . "/");
 
+	# build a shell script to fixup the package like Pat's Perl SlackBuild
 	open(my $script_fh,">$dest_dir/build.sh") or die "Failed to open build.sh for writing: $!";
 	print $script_fh "cd $dest_dir\n";
 	print $script_fh "find . | xargs file | grep \"executable\" | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null\n";
@@ -120,8 +142,10 @@ sub do_package {
 	system("cd $dest_dir && sh build.sh");
 	system("cd $dest_dir && rm build.sh");
 
-	if( scalar(keys %{$pack->prereq_pm()}) > 0 ){
+	# generate the slack-required file
+	if( @deps > 0 ){
 		open(my $required_fh,">$dest_dir/install/slack-required") or die "Failed to open slack-required for writing: $!";
+		# use the hashref here so we can get the version
 		my $deps = $pack->prereq_pm();
 		foreach my $perl_mod_dep ( keys %{$deps} ){
 			my $version = $deps->{$perl_mod_dep};
@@ -135,6 +159,7 @@ sub do_package {
 		close($required_fh);
 	}
 
+	# generate the slack-desc file
 	open(my $desc_fh,">$dest_dir/install/slack-desc") or die "Failed to open slack-desc for writing: $!";
 	print $desc_fh "\n";
 	print $desc_fh "# HOW TO EDIT THIS FILE:\n";
@@ -158,9 +183,11 @@ sub do_package {
 	print $desc_fh "$final_pkg_name:  \n";
 	close($desc_fh);
 
+	# finally, build the package
 	system("cd $dest_dir && makepkg -l y -c n /usr/src/$pkg_name");
 	die "Failed to build package $pkg_name: $!" unless ( -f "/usr/src/$pkg_name" );
 
+	# install the package
 	if( $recursive or $install_after_building ){
 		system("installpkg /usr/src/$pkg_name");
 	}
@@ -177,6 +204,9 @@ sub usage {
 	print "                     as it traverses the dependency tree (DANGEROUS)\n";
 	print "  --ignoreinstalled  don't build installed required modules","\n";
 	print "                     this only works with --recursive\n";
+	print "  --install          always install the generated package\n";
+	print "                     this is on for --recursive by default\n";
+
 	exit(1);
 }
 

@@ -1,5 +1,7 @@
 
 0.1 Nov 16, 2004
+ * --ignoreinstalled now truncates dependency list
+ * added --install option
  * added manpage
  * binary packages are now generated with arch from perl -V:archname
  * added -ignoreinstalled option
