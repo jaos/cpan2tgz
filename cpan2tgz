@@ -74,6 +74,8 @@ sub do_package {
 
 	if( scalar( keys %{$pack->prereq_pm()} ) > 0 ){
 		if($recursive){
+			print "\n\nhandling " . scalar(keys %{$pack->prereq_pm()})
+				. " deps for $module_name: ",join(", ",keys %{$pack->prereq_pm()}),"\n\n";
 			foreach my $dep ( keys %{$pack->prereq_pm()} ){
 				local $@;
 				next if defined $PACKAGE_CACHE_LIST{$dep};
