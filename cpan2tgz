@@ -54,9 +54,6 @@ sub do_package {
 		exit(1);
 	}
 
-	print "\n\nProcessing $module_name...\n\n";
-	$PACKAGE_CACHE_LIST{$module->id()} = 1;
-
 	# try to extract some info about the module
 	my $pkg_name = "perl-" . lc((split('/',$module->cpan_file))[-1]);
 	my $final_pkg_version = (split('-',$pkg_name))[-1];
@@ -68,9 +65,22 @@ sub do_package {
 		$pkg_name .= "-noarch";
 	}
 	$pkg_name .= "-1.tgz";
-	$pkg_name = lc($pkg_name);
 
 	my $dest_dir = "/tmp/" . $module->id();
+
+	if( exists $PACKAGE_CACHE_LIST{$module->id()} || exists $PACKAGE_CACHE_LIST{$final_pkg_name} ){
+		print STDERR "\n\n",$module->id(),"/",$final_pkg_name,
+			" deferred, already in queue or installed\n\n";
+		return;
+	}
+	# store this so we don't process the same module twice
+	# CPAN.pm complains about the module already processed in it's session
+	$PACKAGE_CACHE_LIST{$module->id()} = 1;
+	# this is for those packages that have names like TimeDate that may provide
+	# multiple packages or a single package that differs from module->id()
+	$PACKAGE_CACHE_LIST{$final_pkg_name} = 1;
+
+	print "\n\nProcessing $module_name...\n\n";
 
 	# do an initial make so that we can get the dep info
 	my $pack = $CPAN::META->instance('CPAN::Distribution',$module->cpan_file());
@@ -99,6 +109,7 @@ sub do_package {
 			keys %{$pack->prereq_pm()};
 	}
 	# look at module prerequisites
+	my @dep_pkg_names;
 	if( @deps > 0 ){
 		if($recursive){
 			print "\n\nhandling " . scalar(@deps)
@@ -106,11 +117,14 @@ sub do_package {
 			sleep(1);
 			foreach my $dep ( @deps ){
 				local $@;
-				next if defined $PACKAGE_CACHE_LIST{$dep};
 				print "FIXME: I don't deal with xsloader b/c make ?n/a?\n",next if $dep =~ m/xsloader/i;
 				eval "no warnings 'all';use $dep;";
-				next if ( $ignore_installed_deps && !$@ );
-				do_package($dep);
+				# continue if installed, unless $ignore_installed_deps is set
+				unless( $@ ){
+					next unless $ignore_installed_deps;
+				}
+				my $dep_pkg_name = do_package($dep);
+				push(@dep_pkg_names,$dep_pkg_name) if $dep_pkg_name;
 			}
 		}else{
 			print "\n\nStopping.\n[", $module->id(), "] requires ", join(", ",@deps),"\n";
@@ -172,16 +186,8 @@ SCRIPT
 	# generate the slack-required file
 	open(my $required_fh,">$dest_dir/install/slack-required") or die "Failed to open slack-required for writing: $!";
 	print $required_fh "perl\n";
-	# use the hashref here so we can get the version
-	my $deps = $pack->prereq_pm();
-	foreach my $perl_mod_dep ( keys %{$deps} ){
-		my $version = $deps->{$perl_mod_dep};
-		(my $pmd = $perl_mod_dep) =~ s/\:\:/\-/g;
-		if( int($version) > 0 ){
-			print $required_fh "perl-$pmd >= $version\n";
-		}else{
-			print $required_fh "perl-$pmd\n";
-		}
+	foreach my $dep (@dep_pkg_names){
+		print $required_fh $dep,"\n";
 	}
 	close($required_fh);
 
@@ -220,6 +226,7 @@ SCRIPT
 
 	clear_build_dir($dest_dir);
 
+	return $final_pkg_name;
 }
 
 sub usage {

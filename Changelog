@@ -1,5 +1,10 @@
 
 0.2 Nov 17, 2004
+ * fixed slack-required generated list to show the actual package names as
+   created, like perl-timedate instead of perl-date-parse and perl-time-zone
+ * fixed bug where -ignoreinstalled was being ignored
+ * enforced that the same package cannot be handled twice in one session,
+   which causes CPAN.pm to complain and abort.
  * -recursive now only installs the module when --install is specified
  * inverted meaning of ignoreinstalled, so now ignoreinstalled will build
    up to date packages for modules already present on the system
