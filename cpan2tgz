@@ -140,26 +140,41 @@ sub do_package {
 	print $script_fh "chmod 644 ./usr/man/man?/*\n" if( -d "$dest_dir/usr/man" );
 	print $script_fh "rmdir ./usr/share\n" if( -d "$dest_dir/usr/share" );
 	print $script_fh "mkdir ./install\n";
+	# generate the doinst.sh to fix perllocal.pod
+	print $script_fh <<SCRIPT
+PERLLOCALPOD=\`find . -name perllocal.pod\`
+cat >./install/doinst.sh <<EOF
+#!/bin/sh
+
+cat >> \${PERLLOCALPOD/.\\//} <<PLP
+
+EOF
+cat \$PERLLOCALPOD >>install/doinst.sh
+echo "PLP" >>install/doinst.sh
+rm \$PERLLOCALPOD
+SCRIPT
+;
+
 	close($script_fh);
 	system("cd $dest_dir && sh build.sh");
 	system("cd $dest_dir && rm build.sh");
 
+	
 	# generate the slack-required file
-	if( scalar(keys %{$pack->prereq_pm()}) > 0 ){
-		open(my $required_fh,">$dest_dir/install/slack-required") or die "Failed to open slack-required for writing: $!";
-		# use the hashref here so we can get the version
-		my $deps = $pack->prereq_pm();
-		foreach my $perl_mod_dep ( keys %{$deps} ){
-			my $version = $deps->{$perl_mod_dep};
-			(my $pmd = $perl_mod_dep) =~ s/\:\:/\-/g;
-			if( int($version) > 0 ){
-				print $required_fh "$pmd >= $version\n";
-			}else{
-				print $required_fh "$pmd\n";
-			}
+	open(my $required_fh,">$dest_dir/install/slack-required") or die "Failed to open slack-required for writing: $!";
+	print $required_fh "perl\n";
+	# use the hashref here so we can get the version
+	my $deps = $pack->prereq_pm();
+	foreach my $perl_mod_dep ( keys %{$deps} ){
+		my $version = $deps->{$perl_mod_dep};
+		(my $pmd = $perl_mod_dep) =~ s/\:\:/\-/g;
+		if( int($version) > 0 ){
+			print $required_fh "perl-$pmd >= $version\n";
+		}else{
+			print $required_fh "perl-$pmd\n";
 		}
-		close($required_fh);
 	}
+	close($required_fh);
 
 	# generate the slack-desc file
 	open(my $desc_fh,">$dest_dir/install/slack-desc") or die "Failed to open slack-desc for writing: $!";
