@@ -27,11 +27,12 @@ use Data::Dumper;
 use Getopt::Long;
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
-my (%PACKAGE_CACHE_LIST,$recursive,$install_after_building);
+my (%PACKAGE_CACHE_LIST,$recursive,$install_after_building,$ignore_installed_deps);
 
 usage() unless
 	GetOptions(
-		"recursive" => \$recursive
+		"recursive" => \$recursive,
+		"ignoreinstalled" => \$ignore_installed_deps,
 	);
 
 usage() unless (scalar(@ARGV) > 0);
@@ -73,8 +74,11 @@ sub do_package {
 	if( scalar( keys %{$pack->prereq_pm()} ) > 0 ){
 		if($recursive){
 			foreach my $dep ( keys %{$pack->prereq_pm()} ){
+				local $@;
 				next if defined $PACKAGE_CACHE_LIST{$dep};
 				print "FIXME: I don't deal with xsloader b/c make ?n/a?\n",next if $dep =~ m/xsloader/i;
+				eval "use $dep;";
+				next if ( $ignore_installed_deps && $@ );
 				do_package($dep);
 			}
 		}else{
@@ -161,7 +165,10 @@ sub do_package {
 }
 
 sub usage {
-	print "Usage: $0 [options] [modules(s)]\n";
+	print "Jason Woodward <woodwardj at jaos dot org>\n";
+	print "Usage: $0 [option(s)] [modules(s)]\n";
+	print "  --recursive        build required modules","\n";
+	print "  --ignoreinstalled  don't build installed required modules","\n";
 	exit(1);
 }
 

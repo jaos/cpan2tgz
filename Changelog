@@ -1,4 +1,7 @@
 
 0.1 Nov 16, 2004
+ * added -ignoreinstalled option
+ * added -recursive option 
+ * filled out usage information
  * initial version
 
