@@ -1,7 +1,8 @@
 
-cpan2tgz
+cpan2tgz - create Slackware packages from CPAN Perl module distributions
 
 by Jason Woodward <woodward at jaos dot org>
 http://software.jaos.org
 
+inspired by Erick Calder's cpan2rpm: http://perl.arix.com/cpan2rpm/
 
