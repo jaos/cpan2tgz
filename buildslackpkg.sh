@@ -49,7 +49,7 @@ EOF
 	echo "PLP" >>install/doinst.sh
 	rm $PERLLOCALPOD
 
-	echo perl > ./install/slack-required
+	echo "perl >= 5.8.4-i486-3" > ./install/slack-required
 
 	cat >./install/slack-desc <<EOF
 # HOW TO EDIT THIS FILE:
