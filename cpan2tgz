@@ -26,7 +26,7 @@ use Config;
 use CPAN;
 use Getopt::Long;
 
-our $VERSION = "0.3";
+our $VERSION = "0.4";
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
 my (%PACKAGE_CACHE_LIST,$recursive,$install_after_building,$ignore_installed_deps,$tmp_dir,$package_dir);
@@ -42,8 +42,18 @@ usage() unless
 
 usage() unless (scalar(@ARGV) > 0);
 
-foreach my $mod (@ARGV){
-	do_package($mod);
+# cache installed packages
+if (opendir(my $pkg_log_dir,"/var/log/packages")) {
+  foreach my $pkg (map { s/(perl\-?.*?)\-(.*?[\.\-].*?[\.\-].*)/$1/; $_;} grep {m/^perl/} grep { ! m/^\.+$/} readdir($pkg_log_dir)) {
+    $PACKAGE_CACHE_LIST{$pkg} = 1;
+  }
+  closedir($pkg_log_dir);
+}
+
+foreach my $mod (@ARGV) {
+  if (! exists $PACKAGE_CACHE_LIST{ "perl-" . $mod} || $ignore_installed_deps) {
+	  do_package($mod);
+  }
 }
 
 sub do_package {
@@ -51,7 +61,7 @@ sub do_package {
 	return unless $module_name;
 
 	my $module = CPAN::Shell->expand('Module',$module_name);
-	unless($module){
+	unless($module) {
 		print STDERR "\nFailed to find module: $module_name","\n";
 		exit(1);
 	}
@@ -61,7 +71,7 @@ sub do_package {
 	my $final_pkg_version = (split('-',$pkg_name))[-1];
 	(my $final_pkg_name = $pkg_name) =~ s/\-$final_pkg_version//;
 	$pkg_name =~ s/\.tar.*?$//;
-	if( $module->xs_file() ){
+	if ($module->xs_file()) {
 		$pkg_name .= "-" . [split('-',$Config{archname})]->[0];
 	}else{
 		$pkg_name .= "-noarch";
@@ -70,7 +80,7 @@ sub do_package {
 
 	my $dest_dir = $tmp_dir . '/' . $module->id();
 
-	if( exists $PACKAGE_CACHE_LIST{$module->id()} || exists $PACKAGE_CACHE_LIST{$final_pkg_name} ){
+	if (exists $PACKAGE_CACHE_LIST{$module->id()} || exists $PACKAGE_CACHE_LIST{$final_pkg_name}) {
 		print STDERR "\n\n",$module->id(),"/",$final_pkg_name,
 			" deferred, already in queue or installed\n\n";
 		return;
@@ -87,42 +97,42 @@ sub do_package {
 	# do an initial make so that we can get the dep info
 	my $pack = $CPAN::META->instance('CPAN::Distribution',$module->cpan_file());
 	die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
-	if( $pack->isa_perl() ){
+	if ($pack->isa_perl()) {
 		print STDERR "\nWill not install ",$module->id()," because it is contained within Perl proper.\n";
 		return;
 	}
 	eval { $pack->make() or die $!; };
-	if( $@ ){
+	if ($@) {
 		print "make ERROR [$module_name]: $!\n";
 		exit(1);
 	}
 
 	my @deps;
-	if( $ignore_installed_deps ){
+	if ($ignore_installed_deps) {
 		# only get the deps that are not installed
 		@deps = grep { $_ && m/\w+/; }
-			map { if($PACKAGE_CACHE_LIST{$_}){undef}else{$_} }
+			map { if ($PACKAGE_CACHE_LIST{$_}) {undef}else{$_} }
 			keys %{$pack->prereq_pm()};
 	}else{
 		# get all dependencies
 		@deps = grep { $_ && m/\w+/; }
-			map { if($PACKAGE_CACHE_LIST{$_}){undef}else{$_} }
-			map { eval "no warnings 'all'; use $_;"; if($@){ $_ } }
+			map { if ($PACKAGE_CACHE_LIST{$_}) {undef}else{$_} }
+			map { eval "no warnings 'all'; use $_;"; if ($@) { $_ } }
 			keys %{$pack->prereq_pm()};
 	}
 	# look at module prerequisites
 	my @dep_pkg_names;
-	if( @deps > 0 ){
-		if($recursive){
+	if (@deps > 0) {
+		if ($recursive) {
 			print "\n\nhandling " . scalar(@deps)
 				. " deps for $module_name: ",join(", ",@deps),"\n\n";
 			sleep(1);
-			foreach my $dep ( @deps ){
+			foreach my $dep (@deps) {
 				local $@;
 				print "FIXME: I don't deal with xsloader b/c make ?n/a?\n",next if $dep =~ m/xsloader/i;
 				eval "no warnings 'all';use $dep;";
 				# continue if installed, unless $ignore_installed_deps is set
-				unless( $@ ){
+				unless($@) {
 					next unless $ignore_installed_deps;
 				}
 				my $dep_pkg_name = do_package($dep);
@@ -146,7 +156,7 @@ sub do_package {
 
 	# install to the package build dir
 	system("cd " . $pack->dir() . " && make install DESTDIR=$dest_dir");
-	die "Failed to install to $dest_dir: $!" unless ( -d $dest_dir );
+	die "Failed to install to $dest_dir: $!" unless (-d $dest_dir);
 
 	# copy documentation to the package build dir
 	system("cd $dest_dir && mkdir -p ./usr/doc/$final_pkg_name-" . $module->cpan_version);
@@ -159,11 +169,11 @@ sub do_package {
 	print $script_fh "find . | xargs file | grep 'shared object' | grep ELF | cut -f 1 -d : | xargs strip --strip-unneeded 2> /dev/null\n";
 	print $script_fh "find ./usr/share/man/ -name '*.3' -exec gzip -9 {} \\; 2> /dev/null\n";
 	print $script_fh "find ./usr/share/man/ -name '*.1' -exec gzip -9 {} \\; 2> /dev/null\n";
-	print $script_fh "mv ./usr/share/man ./usr/\n" if( -d "$dest_dir/usr/share/man" );
-	print $script_fh "chown -R root.bin ./usr/bin\n" if( -d "$dest_dir/usr/bin" );
-	print $script_fh "chmod 755 ./usr/bin/*\n" if( -d "$dest_dir/usr/bin");
-	print $script_fh "chmod 644 ./usr/man/man?/*\n" if( -d "$dest_dir/usr/man" );
-	print $script_fh "rmdir ./usr/share\n" if( -d "$dest_dir/usr/share" );
+	print $script_fh "mv ./usr/share/man ./usr/\n" if (-d "$dest_dir/usr/share/man");
+	print $script_fh "chown -R root.bin ./usr/bin\n" if (-d "$dest_dir/usr/bin");
+	print $script_fh "chmod 755 ./usr/bin/*\n" if (-d "$dest_dir/usr/bin");
+	print $script_fh "chmod 644 ./usr/man/man?/*\n" if (-d "$dest_dir/usr/man");
+	print $script_fh "rmdir ./usr/share\n" if (-d "$dest_dir/usr/share");
 	print $script_fh "mkdir ./install\n";
 	# generate the doinst.sh to fix perllocal.pod
 	print $script_fh <<SCRIPT
@@ -188,7 +198,7 @@ SCRIPT
 	# generate the slack-required file
 	open(my $required_fh,">$dest_dir/install/slack-required") or die "Failed to open slack-required for writing: $!";
 	print $required_fh "perl\n";
-	foreach my $dep (@dep_pkg_names){
+	foreach my $dep (@dep_pkg_names) {
 		print $required_fh $dep,"\n";
 	}
 	close($required_fh);
@@ -206,23 +216,23 @@ SCRIPT
 	print $desc_fh "         |-----handy-ruler------------------------------------------------------|\n";
 	print $desc_fh "$final_pkg_name: $final_pkg_name " . $module->cpan_version() . " (Perl module)\n";
 	print $desc_fh "$final_pkg_name:  \n";
+	print $desc_fh "$final_pkg_name:  \n";
+	print $desc_fh "$final_pkg_name:  \n";
+	print $desc_fh "$final_pkg_name:  \n";
+	print $desc_fh "$final_pkg_name:  \n";
+	print $desc_fh "$final_pkg_name:  \n";
 	print $desc_fh "$final_pkg_name:  Packaged by cpan2tgz\n";
-	print $desc_fh "$final_pkg_name:  \n";
 	print $desc_fh "$final_pkg_name:  cpan2tgz by Jason Woodward <woodwardj\@jaos.org>\n";
-	print $desc_fh "$final_pkg_name:  \n";
-	print $desc_fh "$final_pkg_name:  \n";
-	print $desc_fh "$final_pkg_name:  \n";
-	print $desc_fh "$final_pkg_name:  \n";
 	print $desc_fh "$final_pkg_name:  http://software.jaos.org/\n";
 	print $desc_fh "$final_pkg_name:  \n";
 	close($desc_fh);
 
 	# finally, build the package
 	system("cd $dest_dir && makepkg -l y -c n $package_dir/$pkg_name");
-	die "Failed to build package $pkg_name: $!" unless ( -f "$package_dir/$pkg_name" );
+	die "Failed to build package $pkg_name: $!" unless (-f "$package_dir/$pkg_name");
 
 	# install the package
-	if( $install_after_building ){
+	if ($install_after_building) {
 		system("installpkg $package_dir/$pkg_name");
 	}
 
@@ -246,8 +256,8 @@ sub usage {
 sub clear_build_dir {
 	my ($dest_dir) = @_;
 	return unless $dest_dir;
-	system("rm -r $dest_dir/*") if ( -d $dest_dir );
-	system("rmdir $dest_dir") if ( -d $dest_dir );
+	system("rm -r $dest_dir/*") if (-d $dest_dir);
+	system("rmdir $dest_dir") if (-d $dest_dir);
 }
 
 1;
