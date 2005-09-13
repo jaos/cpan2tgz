@@ -8,7 +8,7 @@ WriteMakefile(
 		ABSTRACT => "create Slackware packages from CPAN Perl module distributions",
 	),
 	EXE_FILES => [ "cpan2tgz" ],
-	PREREQ_PM => { # e.g., Module::Name => 1.1
+	PREREQ_PM => {
 		'ExtUtils::MakeMaker' => 6.17,
 		'Config' => 0,
 		'CPAN' => 0,
