@@ -1,4 +1,7 @@
 
+0.5 Nov 16, 2005
+ * updated the README
+
 0.4 Sep 13, 2005
  * re-added --pkgdir, updated POD documentation
  * do not install installed packages when ingoreinstalled is not set
