@@ -21,7 +21,7 @@ if [ ! -d "$DESTINATION" ]; then
 fi
 
 (cd $DESTINATION && mkdir -p ./usr/doc/${PKGNAME}-${VERSION} )
-find . -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*' -o -iregex '.*license.*' -o -iregex '.*copying.*' -o -iregex '.*install.*' -o -iregex '.*\.txt' -o -iregex '.*\.html' |xargs -r -iZ cp Z $DESTINATION/usr/doc/${PKGNAME}-${VERSION}
+find . -type f -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*' -o -iregex '.*license.*' -o -iregex '.*copying.*' -o -iregex '.*install.*' -o -iregex '.*\.txt' -o -iregex '.*\.html' |xargs -r -iZ cp Z $DESTINATION/usr/doc/${PKGNAME}-${VERSION}
 
 (
 	cd $DESTINATION;
@@ -41,15 +41,17 @@ find . -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*' -o -ir
 	mkdir install
 
 	PERLLOCALPOD=`find . -name perllocal.pod`
-	cat >./install/doinst.sh <<EOF
+  if [ -n "$PERLLOCALPOD" ]; then
+	  cat >./install/doinst.sh <<EOF
 #!/bin/sh
 cat >> ${PERLLOCALPOD/.\\//} <<PLP
 EOF
-	cat $PERLLOCALPOD >>install/doinst.sh
-	echo "PLP" >>install/doinst.sh
-	rm $PERLLOCALPOD
+	  cat $PERLLOCALPOD >>install/doinst.sh
+	  echo "PLP" >>install/doinst.sh
+	  rm $PERLLOCALPOD
+  fi
 
-	echo "perl >= 5.8.4-i486-3" > ./install/slack-required
+	echo "perl" > ./install/slack-required
 
 	cat >./install/slack-desc <<EOF
 # HOW TO EDIT THIS FILE:

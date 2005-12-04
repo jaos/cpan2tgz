@@ -1,5 +1,6 @@
 
-0.5 Dec 03, 2005
+0.5 Dec 04, 2005
+ * updated buildslackpkg.sh script to double check the presence of perllocal.pod
  * correctly handle modules that do not create perllocal.pod files
  * added support for Build.PL based modules
  * updated the README
