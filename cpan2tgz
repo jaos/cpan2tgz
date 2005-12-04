@@ -29,29 +29,30 @@ use Getopt::Long;
 our $VERSION = "0.5";
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
-my (%PACKAGE_CACHE_LIST,$recursive,$install_after_building,$ignore_installed_deps,$tmp_dir,$package_dir);
+my (%PACKAGE_CACHE_LIST,$recursive,$install_after_building,$ignore_installed_deps,$tmp_dir,$package_dir,$nobanner);
 $tmp_dir = "/tmp/";
 $package_dir = "/usr/src/";
 
 usage() unless
   GetOptions(
-    "recursive" => \$recursive,
+    "recursive"       => \$recursive,
     "ignoreinstalled" => \$ignore_installed_deps,
-    "install" => \$install_after_building,
-    "pkgdir" => \$package_dir,
+    "install"         => \$install_after_building,
+    "pkgdir"          => \$package_dir,
+    "nobanner"        => \$nobanner,
   );
 
 usage() unless (scalar(@ARGV) > 0);
 
 # cache installed packages
-if (opendir(my $pkg_log_dir,"/var/log/packages")) {
+if ( opendir(my $pkg_log_dir,"/var/log/packages") ) {
   foreach my $pkg (map { s/(perl\-?.*?)\-(.*?[\.\-].*?[\.\-].*)/$1/; $_;} grep {m/^perl/} grep { ! m/^\.+$/} readdir($pkg_log_dir)) {
     $PACKAGE_CACHE_LIST{$pkg} = 1;
   }
   closedir($pkg_log_dir);
 }
 
-foreach my $mod (@ARGV) {
+foreach my $mod ( @ARGV ) {
   if (! exists $PACKAGE_CACHE_LIST{ "perl-" . $mod} || $ignore_installed_deps) {
     do_package($mod);
   }
@@ -73,7 +74,8 @@ sub do_package
   my $final_pkg_version = (split('-',$pkg_name))[-1];
   (my $final_pkg_name = $pkg_name) =~ s/\-$final_pkg_version//;
   $pkg_name =~ s/\.tar.*?$//;
-  if ($module->xs_file()) {
+
+  if ( $module->xs_file() ) {
     $pkg_name .= "-" . [split('-',$Config{archname})]->[0];
   }else{
     $pkg_name .= "-noarch";
@@ -82,7 +84,7 @@ sub do_package
 
   my $dest_dir = $tmp_dir . '/' . $module->id();
 
-  if (exists $PACKAGE_CACHE_LIST{$module->id()} || exists $PACKAGE_CACHE_LIST{$final_pkg_name}) {
+  if ( exists $PACKAGE_CACHE_LIST{$module->id()} || exists $PACKAGE_CACHE_LIST{$final_pkg_name} ) {
     print STDERR "\n\n",$module->id(),"/",$final_pkg_name,
       " deferred, already in queue or installed\n\n";
     return;
@@ -99,12 +101,13 @@ sub do_package
   # do an initial make so that we can get the dep info
   my $pack = $CPAN::META->instance('CPAN::Distribution',$module->cpan_file());
   die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
-  if ($pack->isa_perl()) {
+
+  if ( $pack->isa_perl() ) {
     print STDERR "\nWill not install ",$module->id()," because it is contained within Perl proper.\n";
     return;
   }
   eval { $pack->make() or die $!; };
-  if ($@) {
+  if ( $@ ) {
     print "make ERROR [$module_name]: $!\n";
     exit(1);
   }
@@ -122,47 +125,61 @@ sub do_package
       map { eval "no warnings 'all'; use $_;"; if ($@) { $_ } }
       keys %{$pack->prereq_pm()};
   }
+
   # look at module prerequisites
   my @dep_pkg_names;
-  if (@deps > 0) {
-    if ($recursive) {
+  if ( @deps > 0 ) {
+
+    if ( $recursive ) {
+
       print "\n\nhandling " . scalar(@deps)
         . " deps for $module_name: ",join(", ",@deps),"\n\n";
+
       sleep(1);
-      foreach my $dep (@deps) {
+
+      foreach my $dep ( @deps ) {
         local $@;
         print "FIXME: I don't deal with xsloader b/c make ?n/a?\n",next if $dep =~ m/xsloader/i;
+
         eval "no warnings 'all';use $dep;";
         # continue if installed, unless $ignore_installed_deps is set
-        unless($@) {
+        unless( $@ ) {
           next unless $ignore_installed_deps;
         }
+
         my $dep_pkg_name = do_package($dep);
         push(@dep_pkg_names,$dep_pkg_name) if $dep_pkg_name;
       }
+
     }else{
       print "\n\nStopping.\n[", $module->id(), "] requires ", join(", ",@deps),"\n";
       exit(1);
     }
+
   }
 
   clear_build_dir($dest_dir);
   
   # here we do steps to cleanup source before we build (per LinuxPackages.net perfect packages instructions)
-  system("cd " . $pack->dir() . " && chown -R root.root .");
-  system("cd " . $pack->dir() . " && find . -perm 777 -exec chmod 755 {} \\;");
-  system("cd " . $pack->dir() . " && find . -perm 555 -exec chmod 755 {} \\;");
-  system("cd " . $pack->dir() . " && find . -perm 444 -exec chmod 644 {} \\;");
-  system("cd " . $pack->dir() . " && find . -perm 666 -exec chmod 644 {} \\;");
-  system("cd " . $pack->dir() . " && find . -perm 664 -exec chmod 644 {} \\;");
+  my $pack_dir = $pack->dir();
+  system("cd $pack_dir && chown -R root.root .");
+  system("cd $pack_dir && find . -perm 777 -exec chmod 755 {} \\;");
+  system("cd $pack_dir && find . -perm 555 -exec chmod 755 {} \\;");
+  system("cd $pack_dir && find . -perm 444 -exec chmod 644 {} \\;");
+  system("cd $pack_dir && find . -perm 666 -exec chmod 644 {} \\;");
+  system("cd $pack_dir && find . -perm 664 -exec chmod 644 {} \\;");
 
   # install to the package build dir
-  system("cd " . $pack->dir() . " && make install DESTDIR=$dest_dir");
+  if ( -f "$pack_dir/Build" ) {
+    system("cd $pack_dir && ./Build install destdir=$dest_dir");
+  } else {
+    system("cd $pack_dir && make install DESTDIR=$dest_dir");
+  }
   die "Failed to install to $dest_dir: $!" unless (-d $dest_dir);
 
   # copy documentation to the package build dir
   system("cd $dest_dir && mkdir -p ./usr/doc/$final_pkg_name-" . $module->cpan_version);
-  system("cd " . $pack->dir() . " && find . -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*' -o -iregex '.*license.*' -o -iregex '.*copying.*' -o -iregex '.*install.*' -o -iregex '.*\.txt' -o -iregex '.*\.html' |xargs -r -iZ cp Z $dest_dir/usr/doc/$final_pkg_name-" . $module->cpan_version . "/");
+  system("cd $pack_dir && find . -type f -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*' -o -iregex '.*license.*' -o -iregex '.*copying.*' -o -iregex '.*install.*' -o -iregex '.*\.txt' -o -iregex '.*\.html' |xargs -r -iZ cp Z $dest_dir/usr/doc/$final_pkg_name-" . $module->cpan_version . "/");
 
   # build a shell script to fixup the package like Pat's Perl SlackBuild
   open(my $script_fh,">$dest_dir/build.sh") or die "Failed to open build.sh for writing: $!";
@@ -180,15 +197,17 @@ sub do_package
   # generate the doinst.sh to fix perllocal.pod
   print $script_fh <<SCRIPT
 PERLLOCALPOD=\`find . -name perllocal.pod\`
-cat >./install/doinst.sh <<EOF
+if [ -n "\$PERLLOCALPOD" ]; then
+  cat >./install/doinst.sh <<EOF
 #!/bin/sh
 
 cat >> \${PERLLOCALPOD/.\\//} <<PLP
 
 EOF
-cat \$PERLLOCALPOD >>install/doinst.sh
-echo "PLP" >>install/doinst.sh
-rm \$PERLLOCALPOD
+  cat \$PERLLOCALPOD >>install/doinst.sh
+  echo "PLP" >>install/doinst.sh
+  rm \$PERLLOCALPOD
+fi
 SCRIPT
 ;
 
@@ -223,9 +242,9 @@ SCRIPT
   print $desc_fh "$final_pkg_name:  \n";
   print $desc_fh "$final_pkg_name:  \n";
   print $desc_fh "$final_pkg_name:  \n";
-  print $desc_fh "$final_pkg_name:  Packaged by cpan2tgz\n";
-  print $desc_fh "$final_pkg_name:  cpan2tgz by Jason Woodward <woodwardj\@jaos.org>\n";
-  print $desc_fh "$final_pkg_name:  http://software.jaos.org/\n";
+  print $desc_fh "$final_pkg_name:  Packaged by cpan2tgz\n" unless $nobanner;
+  print $desc_fh "$final_pkg_name:  cpan2tgz by Jason Woodward <woodwardj\@jaos.org>\n" unless $nobanner;
+  print $desc_fh "$final_pkg_name:  http://software.jaos.org/\n" unless $nobanner;
   print $desc_fh "$final_pkg_name:  \n";
   close($desc_fh);
 
@@ -253,6 +272,7 @@ sub usage
   print "                     on the system.  This only works with --recursive\n";
   print "  --install          always install the generated package(s)\n";
   print "  --pkgdir           location to place the generated package(s)\n";
+  print "  --nobanner         Leave out the cpan2tgz banner in the description\n";
 
   exit(1);
 }

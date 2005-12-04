@@ -1,5 +1,7 @@
 
-0.5 Nov 16, 2005
+0.5 Dec 03, 2005
+ * correctly handle modules that do not create perllocal.pod files
+ * added support for Build.PL based modules
  * updated the README
 
 0.4 Sep 13, 2005

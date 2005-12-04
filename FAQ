@@ -43,7 +43,7 @@ Frequenty Asked Questions:
    perl -e 'use CPAN; CPAN::Shell->r;'
 
 
-6.  Why doesn't this work on 9.1 and below?
+6.  Why doesn't this work on Slackware 9.1 and below?
 
  cpan2tgz requires the ExtUtils::MakeMaker package support DESTDIR.  Upgrading
  ExtUtils::MakeMaker manually seems to take care of this.
