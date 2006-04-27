@@ -26,18 +26,23 @@ use Config;
 use CPAN;
 use Getopt::Long;
 
-our $VERSION = "0.5";
+our $VERSION = "0.5.1";
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
-my (%PACKAGE_CACHE_LIST,$recursive,$install_after_building,$ignore_installed_deps,$tmp_dir,$package_dir,$nobanner);
+my (
+    %PACKAGE_CACHE_LIST,        $no_recursive,
+    $no_install_after_building, $ignore_installed_deps,
+    $tmp_dir,                   $package_dir,
+    $nobanner
+);
 $tmp_dir = "/tmp/";
 $package_dir = "/usr/src/";
 
 usage() unless
   GetOptions(
-    "recursive"       => \$recursive,
+    "no-recursive"    => \$no_recursive,
     "ignoreinstalled" => \$ignore_installed_deps,
-    "install"         => \$install_after_building,
+    "no-install"      => \$no_install_after_building,
     "pkgdir"          => \$package_dir,
     "nobanner"        => \$nobanner,
   );
@@ -46,16 +51,28 @@ usage() unless (scalar(@ARGV) > 0);
 
 # cache installed packages
 if ( opendir(my $pkg_log_dir,"/var/log/packages") ) {
-  foreach my $pkg (map { s/(perl\-?.*?)\-(.*?[\.\-].*?[\.\-].*)/$1/; $_;} grep {m/^perl/} grep { ! m/^\.+$/} readdir($pkg_log_dir)) {
+
+  my @pkgs =
+    map   { s/(perl\-?.*?)\-(.*?[\.\-].*?[\.\-].*)/$1/; $_;}
+    grep  { m/^perl/ }
+    grep  { ! m/^\.+$/}
+    readdir($pkg_log_dir);
+
+  foreach my $pkg (@pkgs) {
     $PACKAGE_CACHE_LIST{$pkg} = 1;
   }
+
   closedir($pkg_log_dir);
+
 }
 
+# now operate on each passed in module unless present in cache
 foreach my $mod ( @ARGV ) {
+
   if (! exists $PACKAGE_CACHE_LIST{ "perl-" . $mod} || $ignore_installed_deps) {
     do_package($mod);
   }
+
 }
 
 sub do_package
@@ -75,9 +92,10 @@ sub do_package
   (my $final_pkg_name = $pkg_name) =~ s/\-$final_pkg_version//;
   $pkg_name =~ s/\.tar.*?$//;
 
+  # figure out the arch of the package, default to noarch
   if ( $module->xs_file() ) {
     $pkg_name .= "-" . [split('-',$Config{archname})]->[0];
-  }else{
+  } else {
     $pkg_name .= "-noarch";
   }
   $pkg_name .= "-1.tgz";
@@ -89,6 +107,7 @@ sub do_package
       " deferred, already in queue or installed\n\n";
     return;
   }
+
   # store this so we don't process the same module twice
   # CPAN.pm complains about the module already processed in it's session
   $PACKAGE_CACHE_LIST{$module->id()} = 1;
@@ -103,9 +122,11 @@ sub do_package
   die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
 
   if ( $pack->isa_perl() ) {
-    print STDERR "\nWill not install ",$module->id()," because it is contained within Perl proper.\n";
+    print STDERR "\nWill not install ",$module->id(),
+      " because it is contained within Perl proper.\n";
     return;
   }
+
   eval { $pack->make() or die $!; };
   if ( $@ ) {
     print "make ERROR [$module_name]: $!\n";
@@ -114,46 +135,48 @@ sub do_package
 
   my @deps;
   if ($ignore_installed_deps) {
+
     # only get the deps that are not installed
-    @deps = grep { $_ && m/\w+/; }
-      map { if ($PACKAGE_CACHE_LIST{$_}) {undef}else{$_} }
+    @deps = grep { defined && m/\w+/; }
+      map { defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
       keys %{$pack->prereq_pm()};
-  }else{
+
+  } elsif (my $deps = $pack->prereq_pm()) {
+
     # get all dependencies
     @deps = grep { $_ && m/\w+/; }
-      map { if ($PACKAGE_CACHE_LIST{$_}) {undef}else{$_} }
+      map { defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
       map { eval "no warnings 'all'; use $_;"; if ($@) { $_ } }
-      keys %{$pack->prereq_pm()};
+      keys %{$deps};
+
   }
 
   # look at module prerequisites
   my @dep_pkg_names;
   if ( @deps > 0 ) {
 
-    if ( $recursive ) {
-
-      print "\n\nhandling " . scalar(@deps)
-        . " deps for $module_name: ",join(", ",@deps),"\n\n";
-
-      sleep(1);
-
-      foreach my $dep ( @deps ) {
-        local $@;
-        print "FIXME: I don't deal with xsloader b/c make ?n/a?\n",next if $dep =~ m/xsloader/i;
-
-        eval "no warnings 'all';use $dep;";
-        # continue if installed, unless $ignore_installed_deps is set
-        unless( $@ ) {
-          next unless $ignore_installed_deps;
-        }
-
-        my $dep_pkg_name = do_package($dep);
-        push(@dep_pkg_names,$dep_pkg_name) if $dep_pkg_name;
-      }
-
-    }else{
+    if ( $no_recursive ) {
       print "\n\nStopping.\n[", $module->id(), "] requires ", join(", ",@deps),"\n";
       exit(1);
+    }
+
+    print "\n\nhandling " . scalar(@deps)
+      . " deps for $module_name: ",join(", ",@deps),"\n\n";
+
+    sleep(1); # blah
+
+    foreach my $dep ( @deps ) {
+      local $@;
+      print "FIXME: I don't deal with xsloader b/c make ?n/a?\n",next if $dep =~ m/xsloader/i;
+
+      eval "no warnings 'all';use $dep;";
+      # continue if installed, unless $ignore_installed_deps is set
+      unless( $@ ) {
+        next unless $ignore_installed_deps;
+      }
+
+      my $dep_pkg_name = do_package($dep);
+      push(@dep_pkg_names,$dep_pkg_name) if $dep_pkg_name;
     }
 
   }
@@ -161,7 +184,9 @@ sub do_package
   clear_build_dir($dest_dir);
   
   # here we do steps to cleanup source before we build (per LinuxPackages.net perfect packages instructions)
+  # this isn't pretty but it gets the job done
   my $pack_dir = $pack->dir();
+
   system("cd $pack_dir && chown -R root.root .");
   system("cd $pack_dir && find . -perm 777 -exec chmod 755 {} \\;");
   system("cd $pack_dir && find . -perm 555 -exec chmod 755 {} \\;");
@@ -194,6 +219,7 @@ sub do_package
   print $script_fh "chmod 644 ./usr/man/man?/*\n" if (-d "$dest_dir/usr/man");
   print $script_fh "rmdir ./usr/share\n" if (-d "$dest_dir/usr/share");
   print $script_fh "mkdir ./install\n";
+
   # generate the doinst.sh to fix perllocal.pod
   print $script_fh <<SCRIPT
 PERLLOCALPOD=\`find . -name perllocal.pod\`
@@ -253,7 +279,7 @@ SCRIPT
   die "Failed to build package $pkg_name: $!" unless (-f "$package_dir/$pkg_name");
 
   # install the package
-  if ($install_after_building) {
+  unless ($no_install_after_building) {
     system("installpkg $package_dir/$pkg_name");
   }
 
@@ -266,11 +292,9 @@ sub usage
 {
   print "Jason Woodward <woodwardj at jaos dot org>\n";
   print "Usage: $0 [option(s)] [modules(s)]\n";
-  print "  --recursive        build required modules","\n";
-  print "                     this may require installing required modules\n";
-  print "  --ignoreinstalled  build installed required modules even if present","\n";
-  print "                     on the system.  This only works with --recursive\n";
-  print "  --install          always install the generated package(s)\n";
+  print "  --no-recursive     do NOT build required modules","\n";
+  print "  --ignoreinstalled  rebuild required modules that are already installed\n";
+  print "  --no-install       do NOT install the generated package(s)\n";
   print "  --pkgdir           location to place the generated package(s)\n";
   print "  --nobanner         Leave out the cpan2tgz banner in the description\n";
 
@@ -297,7 +321,7 @@ cpan2tgz - create Slackware GNU/Linux packages from CPAN Perl module distributio
 
 cpan2tgz [option(s)] [module(s)]
 
-options: [--recursive] [--ignoreinstalled] [--install] [--pkgdir]
+options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir]
 
 =head1 DESCRIPTION
 
@@ -307,17 +331,17 @@ cpan2tgz is a tool to create Slackware GNU/Linux packages from CPAN Perl module 
 
 =over
 
-=item B<--recursive>
+=item B<--no-recursive>
 
-This will build required module(s) and install them (if --install is specificed) as it traverses the dependency tree of the specified Perl module(s).  This can be dangerous.  It might be best to install one at a time.
+This will NOT build required module(s).  Otherwise dependencies are built and installed as cpan2tgz traverses the dependency tree of the specified Perl module(s).  This can be dangerous.  It might be best to install one at a time.
 
 =item B<--ignoreinstalled>
 
-This option specifies to build packages for required modules even if the module is found to be present and installed on the system.  This only works in conjunction with --recursive.
+This option specifies to build packages for required modules even if the module is found to be present and installed on the system.
 
-=item B<--install>
+=item B<--no-install>
 
-Always install the generated package(s).  This is useful with --recursive to satisfy dependencies.
+Do NOT install the generated package(s).
 
 =item B<--pkgdir>
 

@@ -1,4 +1,9 @@
 
+0.5.1 Apr 26, 2006
+ * made --install and --recursive the default, changed options to
+   --no-install and --no-recursive
+ * fixed bug with newer CPAN.pm's returning undef from prereq_pm()
+
 0.5 Dec 04, 2005
  * updated buildslackpkg.sh script to double check the presence of perllocal.pod
  * correctly handle modules that do not create perllocal.pod files

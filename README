@@ -1,49 +1,42 @@
 
 NAME
-       cpan2tgz - create Slackware GNU/Linux packages from CPAN
-       Perl module distributions
+       cpan2tgz - create Slackware GNU/Linux packages from CPAN Perl module
+       distributions
 
 SYNOPSIS
        cpan2tgz [option(s)] [module(s)]
 
-       options: [--recursive] [--ignoreinstalled] [--install]
-       [--pkgdir]
+       options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir]
 
 DESCRIPTION
-       cpan2tgz is a tool to create Slackware GNU/Linux packages
-       from CPAN Perl module distributions.  cpan2tgz was
-       inspired by cpan2rpm.
+       cpan2tgz is a tool to create Slackware GNU/Linux packages from CPAN
+       Perl module distributions.  cpan2tgz was inspired by cpan2rpm.
 
 OPTIONS
-       --recursive
-           This will build required module(s) and install them
-           (if --install is specificed) as it traverses the
-           dependency tree of the specified Perl module(s).  This
-           can be dangerous.  It might be best to install one at
-           a time.
+       --no-recursive
+           This will NOT build required module(s).  Otherwise dependencies are
+           built and installed as cpan2tgz traverses the dependency tree of
+           the specified Perl module(s).  This can be dangerous.  It might be
+           best to install one at a time.
 
        --ignoreinstalled
-           This option specifies to build packages for required
-           modules even if the module is found to be present and
-           installed on the system.  This only works in conjunc\uffff
-           tion with --recursive.
+           This option specifies to build packages for required modules even
+           if the module is found to be present and installed on the system.
 
-       --install
-           Always install the generated package(s).  This is use\uffff
-           ful with --recursive to satisfy dependencies.
+       --no-install
+           Do NOT install the generated package(s).
 
        --pkgdir
-           This option specifies the final location to place the
-           generated package(s).  Defaults to /usr/src.
+           This option specifies the final location to place the generated
+           package(s).  Defaults to /usr/src.
 
-       module(s)
+       module((s))
            A series of Perl modules to install, ie Data::Dumper
 
 NOTES
-       cpan2tgz uses the CPAN Perl module.  A working CPAN/Con\uffff
-       fig.pm is assumed.  If CPAN has not been initialized prior
-       to running cpan2tgz, it will be initialized on the first
-       run.
+       cpan2tgz uses the CPAN Perl module.  A working CPAN/Config.pm is
+       assumed.  If CPAN has not been initialized prior to running cpan2tgz,
+       it will be initialized on the first run.
 
 AUTHOR
        Jason Woodward <woodwardj@jaos.org>
@@ -51,11 +44,5 @@ AUTHOR
        http://software.jaos.org/
 
 SEE ALSO
-       installpkg(8), makepkg(8), removepkg(8), pkgtool(8),
-       upgradepkg(8),
-
-       any
-
-       Unix/System_administration
-
+       installpkg(8), makepkg(8), removepkg(8), pkgtool(8), upgradepkg(8),
 
