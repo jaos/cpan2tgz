@@ -33,7 +33,7 @@ my (
     %PACKAGE_CACHE_LIST,        $no_recursive,
     $no_install_after_building, $ignore_installed_deps,
     $tmp_dir,                   $package_dir,
-    $nobanner
+    $nobanner,                  $upgrade_all
 );
 $tmp_dir = "/tmp/";
 $package_dir = "/usr/src/";
@@ -45,9 +45,10 @@ usage() unless
     "no-install"      => \$no_install_after_building,
     "pkgdir"          => \$package_dir,
     "nobanner"        => \$nobanner,
+    "upgrade-all"     => \$upgrade_all,
   );
 
-usage() unless (scalar(@ARGV) > 0);
+usage() unless (scalar(@ARGV) > 0 || $upgrade_all);
 
 # cache installed packages
 if ( opendir(my $pkg_log_dir,"/var/log/packages") ) {
@@ -66,8 +67,12 @@ if ( opendir(my $pkg_log_dir,"/var/log/packages") ) {
 
 }
 
+my @modules = @ARGV ? @ARGV
+            : $upgrade_all ? CPAN::Shell->r()
+            : ();
+
 # now operate on each passed in module unless present in cache
-foreach my $mod ( @ARGV ) {
+foreach my $mod ( @modules ) {
 
   if (! exists $PACKAGE_CACHE_LIST{ "perl-" . $mod} || $ignore_installed_deps) {
     do_package($mod);
@@ -297,6 +302,7 @@ sub usage
   print "  --no-install       do NOT install the generated package(s)\n";
   print "  --pkgdir           location to place the generated package(s)\n";
   print "  --nobanner         Leave out the cpan2tgz banner in the description\n";
+  print "  --upgrade-all      Create packages (and install) for all outdated modules\n";
 
   exit(1);
 }
@@ -322,6 +328,8 @@ cpan2tgz - create Slackware GNU/Linux packages from CPAN Perl module distributio
 cpan2tgz [option(s)] [module(s)]
 
 options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir]
+
+cpan2tgz --upgrade-all
 
 =head1 DESCRIPTION
 
@@ -350,6 +358,10 @@ This option specifies the final location to place the generated package(s).  Def
 =item B<module(s)>
 
 A series of Perl modules to install, ie Data::Dumper
+
+=item B<--upgrade-all>
+
+Create packages and install for all outdated modules on the system.  Do not pass in module names on the command line.
 
 =head1 NOTES
 

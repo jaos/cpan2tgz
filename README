@@ -8,6 +8,8 @@ SYNOPSIS
 
        options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir]
 
+       cpan2tgz --upgrade-all
+
 DESCRIPTION
        cpan2tgz is a tool to create Slackware GNU/Linux packages from CPAN
        Perl module distributions.  cpan2tgz was inspired by cpan2rpm.
@@ -32,6 +34,10 @@ OPTIONS
 
        module((s))
            A series of Perl modules to install, ie Data::Dumper
+
+       --upgrade-all
+           Create packages and install for all outdated modules on the system.
+           Do not pass in module names on the command line.
 
 NOTES
        cpan2tgz uses the CPAN Perl module.  A working CPAN/Config.pm is
