@@ -26,14 +26,15 @@ use Config;
 use CPAN;
 use Getopt::Long;
 
-our $VERSION = "0.5.1";
+our $VERSION = "0.5.2";
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
 my (
     %PACKAGE_CACHE_LIST,        $no_recursive,
     $no_install_after_building, $ignore_installed_deps,
     $tmp_dir,                   $package_dir,
-    $nobanner,                  $upgrade_all
+    $nobanner,                  $upgrade_all,
+    $build_tag
 );
 $tmp_dir = "/tmp/";
 $package_dir = "/usr/src/";
@@ -43,10 +44,12 @@ usage() unless
     "no-recursive"    => \$no_recursive,
     "ignoreinstalled" => \$ignore_installed_deps,
     "no-install"      => \$no_install_after_building,
-    "pkgdir"          => \$package_dir,
+    "pkgdir=s"        => \$package_dir,
     "nobanner"        => \$nobanner,
     "upgrade-all"     => \$upgrade_all,
+    "build-tag=s"     => \$build_tag,
   );
+$build_tag ||= q[];
 
 usage() unless (scalar(@ARGV) > 0 || $upgrade_all);
 
@@ -103,7 +106,7 @@ sub do_package
   } else {
     $pkg_name .= "-noarch";
   }
-  $pkg_name .= "-1.tgz";
+  $pkg_name .= "-1$build_tag.tgz";
 
   my $dest_dir = $tmp_dir . '/' . $module->id();
 
@@ -125,6 +128,12 @@ sub do_package
   # do an initial make so that we can get the dep info
   my $pack = $CPAN::META->instance('CPAN::Distribution',$module->cpan_file());
   die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
+
+  # add the modules unpacked directory to the library search path
+  push @INC, $pack->dir();
+  if ( -d $pack->dir() . '/lib' ) {
+  push @INC, $pack->dir() . '/lib';
+  }
 
   if ( $pack->isa_perl() ) {
     print STDERR "\nWill not install ",$module->id(),
@@ -327,7 +336,7 @@ cpan2tgz - create Slackware GNU/Linux packages from CPAN Perl module distributio
 
 cpan2tgz [option(s)] [module(s)]
 
-options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir]
+options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir] [--build-tag]
 
 cpan2tgz --upgrade-all
 
@@ -362,6 +371,10 @@ A series of Perl modules to install, ie Data::Dumper
 =item B<--upgrade-all>
 
 Create packages and install for all outdated modules on the system.  Do not pass in module names on the command line.
+
+=item B<--build-tag>
+
+Set the package's build tag, foo-0.1-arch-1buildtag.tgz.
 
 =head1 NOTES
 
