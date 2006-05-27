@@ -1,11 +1,9 @@
 
-0.5.2 May 27, 2006
+0.6 May 27, 2006
  * added --build-number option (see docs)
  * fixed architecture detection by examining unpacked module source
    directory.
  * added --build-tag option (see docs)
-
-0.5.1 Apr 30, 2006
  * added --upgrade-all option (see docs)
  * made --install and --recursive the default, changed options to
    --no-install and --no-recursive
