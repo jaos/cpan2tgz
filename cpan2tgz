@@ -25,6 +25,7 @@ use warnings;
 use Config;
 use CPAN;
 use Getopt::Long;
+use File::Find ();
 
 our $VERSION = "0.5.2";
 
@@ -93,6 +94,9 @@ sub do_package
     print STDERR "\nFailed to find module: $module_name","\n";
     exit(1);
   }
+  my $pack = $module->distribution;
+  die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
+  $pack->get(); # go ahead and fetch so we can inspect the source dir for arch info
 
   # try to extract some info about the module
   my $pkg_name = "perl-" . lc((split('/',$module->cpan_file))[-1]);
@@ -101,7 +105,9 @@ sub do_package
   $pkg_name =~ s/\.tar.*?$//;
 
   # figure out the arch of the package, default to noarch
-  if ( $module->xs_file() ) {
+  my @xs_files = ();
+  File::Find::find( sub { /^.*\.(?:xs|c|h|so)\z/s && push @xs_files, $_; }, $pack->dir);
+  if ( $module->xs_file() || @xs_files ) {
     $pkg_name .= "-" . [split('-',$Config{archname})]->[0];
   } else {
     $pkg_name .= "-noarch";
@@ -125,22 +131,13 @@ sub do_package
 
   print "\n\nProcessing $module_name...\n\n";
 
-  # do an initial make so that we can get the dep info
-  my $pack = $CPAN::META->instance('CPAN::Distribution',$module->cpan_file());
-  die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
-
-  # add the modules unpacked directory to the library search path
-  push @INC, $pack->dir();
-  if ( -d $pack->dir() . '/lib' ) {
-  push @INC, $pack->dir() . '/lib';
-  }
-
   if ( $pack->isa_perl() ) {
     print STDERR "\nWill not install ",$module->id(),
       " because it is contained within Perl proper.\n";
     return;
   }
 
+  # do an initial make so that we can get the dep info
   eval { $pack->make() or die $!; };
   if ( $@ ) {
     print "make ERROR [$module_name]: $!\n";
@@ -175,7 +172,7 @@ sub do_package
     }
 
     print "\n\nhandling " . scalar(@deps)
-      . " deps for $module_name: ",join(", ",@deps),"\n\n";
+      . " dependencies for $module_name: ",join(", ",@deps),"\n\n";
 
     sleep(1); # blah
 

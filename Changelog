@@ -1,7 +1,7 @@
 
-0.5.2 May 17, 2006
- * put the modules unpacked directory (along with ./lib)
-   into Perl's include path
+0.5.2 May 27, 2006
+ * fixed architecture detection by examining unpacked module source
+   directory.
  * added --build-tag option (see docs)
 
 0.5.1 Apr 30, 2006
