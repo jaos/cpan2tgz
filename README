@@ -6,7 +6,7 @@ NAME
 SYNOPSIS
        cpan2tgz [option(s)] [module(s)]
 
-       options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir] [--build-tag]
+       options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir] [--build-tag] [--build-number]
 
        cpan2tgz --upgrade-all
 
@@ -32,7 +32,7 @@ OPTIONS
            This option specifies the final location to place the generated
            package(s).  Defaults to /usr/src.
 
-       module((s))
+       module(s)
            A series of Perl modules to install, ie Data::Dumper
 
        --upgrade-all
@@ -41,6 +41,9 @@ OPTIONS
 
        --build-tag
            Set the package's build tag, foo-0.1-arch-1buildtag.tgz.
+
+       --build-number
+           Set the package's build number, foo-0.1-arch-build_number.tgz.
 
 NOTES
        cpan2tgz uses the CPAN Perl module.  A working CPAN/Config.pm is
