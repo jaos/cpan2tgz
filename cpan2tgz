@@ -96,7 +96,13 @@ sub do_package
     print STDERR "\nFailed to find module: $module_name","\n";
     exit(1);
   }
-  my $pack = $module->distribution;
+
+  my $pack;
+  if ($module->can('distribution')) {
+    $pack = $module->distribution;
+  } else {
+    $pack = $CPAN::META->instance('CPAN::Distribution',$module->cpan_file());
+  }
   die "Failed to initialize CPAN::Distribution object for $module_name: $!" unless $pack;
   $pack->get(); # go ahead and fetch so we can inspect the source dir for arch info
 
