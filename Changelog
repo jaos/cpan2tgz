@@ -1,4 +1,7 @@
 
+0.6.1 Nov 11, 2006
+ * /usr/bin permission fix for package build script
+
 0.6 May 27, 2006
  * added --build-number option (see docs)
  * fixed architecture detection by examining unpacked module source

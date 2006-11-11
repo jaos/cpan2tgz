@@ -33,7 +33,7 @@ find . -type f -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*
 		mv ./usr/share/man ./usr
 	fi
 	if [ -d ./usr/bin ]; then
-		chown -R root.bin ./usr/bin
+	  chown -R $(stat --format "%u:%g" /usr/sbin) ./usr/bin
 		chmod 755 ./usr/bin/*
 	fi
 	chmod 644 ./usr/man/man?/*

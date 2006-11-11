@@ -27,7 +27,7 @@ use CPAN;
 use Getopt::Long;
 use File::Find ();
 
-our $VERSION = "0.6";
+our $VERSION = "0.6.1";
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
 my (
@@ -233,7 +233,7 @@ sub do_package
   print $script_fh "find ./usr/share/man/ -name '*.3' -exec gzip -9 {} \\; 2> /dev/null\n";
   print $script_fh "find ./usr/share/man/ -name '*.1' -exec gzip -9 {} \\; 2> /dev/null\n";
   print $script_fh "mv ./usr/share/man ./usr/\n" if (-d "$dest_dir/usr/share/man");
-  print $script_fh "chown -R root.bin ./usr/bin\n" if (-d "$dest_dir/usr/bin");
+  print $script_fh "chown -R `stat --format '%u:%g' /usr/bin` ./usr/bin\n" if (-d "$dest_dir/usr/bin");
   print $script_fh "chmod 755 ./usr/bin/*\n" if (-d "$dest_dir/usr/bin");
   print $script_fh "chmod 644 ./usr/man/man?/*\n" if (-d "$dest_dir/usr/man");
   print $script_fh "rmdir ./usr/share\n" if (-d "$dest_dir/usr/share");
