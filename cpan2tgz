@@ -27,7 +27,7 @@ use CPAN;
 use Getopt::Long;
 use File::Find ();
 
-our $VERSION = "0.6.1";
+our $VERSION = '0.6.2';
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
 my (
@@ -91,7 +91,9 @@ sub do_package
   my ($module_name) = @_;
   return unless $module_name;
 
-  my $module = CPAN::Shell->expand('Module',$module_name);
+  my $module =  CPAN::Shell->expand('Module',$module_name)
+                || CPAN::Shell->expand('Bundle',$module_name)
+                || CPAN::Shell->expand('Distribution',$module_name);
   unless($module) {
     print STDERR "\nFailed to find module: $module_name","\n";
     exit(1);
