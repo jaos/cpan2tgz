@@ -1,5 +1,7 @@
 
-0.6.2 Feb 02, 2007
+0.6.2 Feb 27, 2007
+ * Exit on installpkg error
+ * Fix for using --ingnoreinstalled with packages w/o dependencies (thanks Cédri)
  * Fix for Bundle:: and Distribution:: modules
 
 0.6.1 Nov 11, 2006

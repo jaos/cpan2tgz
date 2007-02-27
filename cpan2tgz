@@ -155,7 +155,7 @@ sub do_package
   }
 
   my @deps;
-  if ($ignore_installed_deps) {
+  if ($ignore_installed_deps && $pack->prereq_pm()) {
 
     # only get the deps that are not installed
     @deps = grep { defined && m/\w+/; }
@@ -301,7 +301,7 @@ SCRIPT
 
   # install the package
   unless ($no_install_after_building) {
-    system("installpkg $package_dir/$pkg_name");
+    system("installpkg $package_dir/$pkg_name") && exit;
   }
 
   clear_build_dir($dest_dir);
