@@ -1,7 +1,7 @@
 #!/bin/sh
 
 DESTINATION=/tmp/$$
-VERSION=`grep VERSION cpan2tgz |awk '{print $4}'|cut -f2 -d\"`
+VERSION=`grep VERSION cpan2tgz | awk '{print $4}'|cut -f2 -d\'`
 PKGNAME=cpan2tgz
 
 perl Makefile.PL
