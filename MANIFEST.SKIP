@@ -1,5 +1,6 @@
 .*.swp
 CVS\/.*
 .*.bak
+\.svn
 Makefile$
 buildslackpkg.sh$
