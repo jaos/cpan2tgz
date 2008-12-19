@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DESTINATION=/tmp/$$
+DESTINATION=$PWD/pkg
 VERSION=`grep VERSION cpan2tgz | awk '{print $4}'|cut -f2 -d\'`
 PKGNAME=cpan2tgz
 
@@ -73,7 +73,7 @@ ${PKGNAME}:
 ${PKGNAME}: http://software.jaos.org/
 ${PKGNAME}: 
 EOF
-	makepkg -l y -c n /usr/src/${PKGNAME}-${VERSION}-noarch-1.tgz
+	makepkg -l y -c n ../${PKGNAME}-${VERSION}-noarch-1.tgz
 )
 
 make distclean
