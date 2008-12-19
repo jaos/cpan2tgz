@@ -27,7 +27,7 @@ use CPAN;
 use Getopt::Long;
 use File::Find ();
 
-our $VERSION = '0.6.2';
+our $VERSION = '0.6.3';
 
 $ENV{PATH} = "/bin:/sbin:/usr/bin:/usr/sbin";
 my (
@@ -156,11 +156,13 @@ sub do_package
 
   my @deps;
   if ($ignore_installed_deps && $pack->prereq_pm()) {
+    my $deps = $pack->prereq_pm();
 
     # only get the deps that are not installed
     @deps = grep { defined && m/\w+/; }
       map { defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
-      keys %{$pack->prereq_pm()};
+      map { m/requires$/ ? keys %{$deps->{$_}} : $_ }
+      keys %{$deps};
 
   } elsif (my $deps = $pack->prereq_pm()) {
 
@@ -168,6 +170,7 @@ sub do_package
     @deps = grep { $_ && m/\w+/; }
       map { defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
       map { eval "no warnings 'all'; use $_;"; if ($@) { $_ } }
+      map { m/requires$/ ? keys %{$deps->{$_}} : $_ }
       keys %{$deps};
 
   }
