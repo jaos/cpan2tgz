@@ -1,4 +1,7 @@
 
+0.6.4 Dec 31, 2008
+ * fixed incorrect return value from CPAN::*::make when YAML or YAML::Syck is in use
+
 0.6.3 Dec 19, 2008
  * updated dependency parsing for new CPAN.pm in 12.2
 
