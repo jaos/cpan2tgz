@@ -26,8 +26,9 @@ use Config;
 use CPAN;
 use Getopt::Long;
 use File::Find ();
+use Errno;
 
-our $VERSION = '0.6.4';
+our $VERSION = '0.6.5';
 our $HAS_YAML = 1;
 eval "no warnings 'all'; use YAML;"; if ($@) { $HAS_YAML = 0 }
 
@@ -155,7 +156,7 @@ sub do_package
     # make does not return the same when YAML or YAML::Syck is in
     # use and $! is set to an internal non-fatal value from a YAML
     # check
-    if (!($! eq 'Inappropriate ioctl for device' && $HAS_YAML)) {
+    if (!($!{ENOTTY} && $HAS_YAML)) {
       print "make ERROR [$module_name]: $!\n";
       exit(1);
     }

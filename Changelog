@@ -1,4 +1,7 @@
 
+0.6.5 Jan 04, 2009
+ * added David Unric's patch for localized error checking via Errno
+
 0.6.4 Dec 31, 2008
  * fixed incorrect return value from CPAN::*::make when YAML or YAML::Syck is in use
 
