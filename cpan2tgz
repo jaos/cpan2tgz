@@ -28,7 +28,7 @@ use Getopt::Long;
 use File::Find ();
 use Errno;
 
-our $VERSION = '0.6.5';
+our $VERSION = '0.6.6';
 our $HAS_YAML = 1;
 eval "no warnings 'all'; use YAML;"; if ($@) { $HAS_YAML = 0 }
 
@@ -38,11 +38,13 @@ my (
     $no_install_after_building, $ignore_installed_deps,
     $tmp_dir,                   $package_dir,
     $nobanner,                  $upgrade_all,
-    $build_tag,                 $build_number
+    $build_tag,                 $build_number,
+    $pkgext,
 );
 $tmp_dir      = "/tmp/";
 $package_dir  = "/usr/src/";
 $build_number = 1;
+$pkgext       = 'tgz';
 
 usage() unless
   GetOptions(
@@ -54,6 +56,7 @@ usage() unless
     "upgrade-all"     => \$upgrade_all,
     "build-tag=s"     => \$build_tag,
     "build-number=i"  => \$build_number,
+    "package-ext=s"  => \$pkgext,
   );
 $build_tag ||= q[];
 
@@ -125,7 +128,7 @@ sub do_package
   } else {
     $pkg_name .= "-noarch";
   }
-  $pkg_name .= "-${build_number}${build_tag}.tgz";
+  $pkg_name .= "-${build_number}${build_tag}.${pkgext}";
 
   my $dest_dir = $tmp_dir . '/' . $module->id();
 
@@ -332,6 +335,7 @@ sub usage
   print "  --upgrade-all      Create packages (and install) for all outdated modules\n";
   print "  --build-tag        Specifies the package build tag\n";
   print "  --build-number     Specifies the package build number\n";
+  print "  --package-ext      Specifies the package extension (default: tgz)\n";
 
   exit(1);
 }
@@ -356,7 +360,7 @@ cpan2tgz - create Slackware GNU/Linux packages from CPAN Perl module distributio
 
 cpan2tgz [option(s)] [module(s)]
 
-options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir] [--build-tag] [--build-number]
+options: [--no-recursive] [--ignoreinstalled] [--no-install] [--pkgdir] [--build-tag] [--build-number] [--package-ext]
 
 cpan2tgz --upgrade-all
 
