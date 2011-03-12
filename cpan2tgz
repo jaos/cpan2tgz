@@ -44,7 +44,7 @@ my (
 $tmp_dir      = "/tmp/";
 $package_dir  = "/usr/src/";
 $build_number = 1;
-$pkgext       = 'tgz';
+$pkgext       = 'txz';
 
 usage() unless
   GetOptions(
@@ -335,7 +335,7 @@ sub usage
   print "  --upgrade-all      Create packages (and install) for all outdated modules\n";
   print "  --build-tag        Specifies the package build tag\n";
   print "  --build-number     Specifies the package build number\n";
-  print "  --package-ext      Specifies the package extension (default: tgz)\n";
+  print "  --package-ext      Specifies the package extension (default: txz)\n";
 
   exit(1);
 }

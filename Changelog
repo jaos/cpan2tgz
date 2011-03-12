@@ -1,5 +1,6 @@
 
 0.6.6 Mar 12, 2011
+ * changed default package extension to txz
  * added option for setting package extension
 
 0.6.5 Jan 04, 2009
