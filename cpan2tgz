@@ -66,7 +66,7 @@ usage() unless (scalar(@ARGV) > 0 || $upgrade_all);
 if ( opendir(my $pkg_log_dir,"/var/log/packages") ) {
 
   my @pkgs =
-    map   { s/(perl\-?.*?)\-(.*?[\.\-].*?[\.\-].*)/$1/; $_;}
+    map   { s/^(perl-[\w\-]+)-(([\w\.]+)-(\w+)-(\w+))$/$1/; $_;}
     grep  { m/^perl/ }
     grep  { ! m/^\.+$/}
     readdir($pkg_log_dir);
@@ -171,6 +171,7 @@ sub do_package
 
     # only get the deps that are not installed
     @deps = grep { defined && m/\w+/; }
+      grep { ! m/^perl$/ }
       map { defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
       map { m/requires$/ ? keys %{$deps->{$_}} : $_ }
       keys %{$deps};
@@ -179,6 +180,7 @@ sub do_package
 
     # get all dependencies
     @deps = grep { $_ && m/\w+/; }
+      grep { ! m/^perl$/ }
       map { defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
       map { eval "no warnings 'all'; use $_;"; if ($@) { $_ } }
       map { m/requires$/ ? keys %{$deps->{$_}} : $_ }
