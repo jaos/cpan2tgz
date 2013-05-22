@@ -1,4 +1,7 @@
 
+0.6.7 May 21, 2013
+ * installed packages and dependency fix
+
 0.6.6 Mar 12, 2011
  * changed default package extension to txz
  * added option for setting package extension
