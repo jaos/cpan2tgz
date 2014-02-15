@@ -233,7 +233,7 @@ sub do_package
 
   # install to the package build dir
   if ( -f "$pack_dir/Build" ) {
-    system("cd $pack_dir && ./Build install destdir=$dest_dir");
+    system("cd $pack_dir && ./Build install --destdir=$dest_dir");
   } else {
     system("cd $pack_dir && make install DESTDIR=$dest_dir");
   }
