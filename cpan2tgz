@@ -28,7 +28,7 @@ use Getopt::Long;
 use File::Find ();
 use Errno;
 
-our $VERSION = '0.6.7';
+our $VERSION = '0.6.8';
 our $HAS_YAML = 1;
 eval "no warnings 'all'; use YAML;"; if ($@) { $HAS_YAML = 0 }
 
