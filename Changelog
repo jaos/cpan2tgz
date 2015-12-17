@@ -1,4 +1,10 @@
 
+0.6.9 Dec 16, 2016
+ * ignore ENOENT from initial make
+
+0.6.8 Feb 14, 2014
+ * Fix --destdir option to work with Module::Build::Tiny
+
 0.6.7 May 21, 2013
  * installed packages and dependency fix
 

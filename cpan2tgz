@@ -158,8 +158,11 @@ sub do_package
   if ( $@ ) {
     # make does not return the same when YAML or YAML::Syck is in
     # use and $! is set to an internal non-fatal value from a YAML
-    # check
-    if (!($!{ENOTTY} && $HAS_YAML)) {
+    # check.
+    #
+    # Newer make calls may succeed but set ENOENT for some reason...
+    # also ignore.
+    if (!(($!{ENOTTY} && $HAS_YAML) || $!{ENOENT})) {
       print "make ERROR [$module_name]: $!\n";
       exit(1);
     }
