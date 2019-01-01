@@ -73,7 +73,7 @@ ${PKGNAME}:
 ${PKGNAME}: http://software.jaos.org/
 ${PKGNAME}: 
 EOF
-	makepkg -l y -c n ../${PKGNAME}-${VERSION}-noarch-1.tgz
+	makepkg -l y -c n ../${PKGNAME}-${VERSION}-noarch-1.txz
 )
 
 make distclean
