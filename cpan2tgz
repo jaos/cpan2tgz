@@ -310,7 +310,7 @@ SCRIPT
   print $desc_fh "$final_pkg_name:  \n";
   print $desc_fh "$final_pkg_name:  Packaged by cpan2tgz\n" unless $nobanner;
   print $desc_fh "$final_pkg_name:  cpan2tgz by Jason Woodward <woodwardj\@jaos.org>\n" unless $nobanner;
-  print $desc_fh "$final_pkg_name:  http://software.jaos.org/\n" unless $nobanner;
+  print $desc_fh "$final_pkg_name:  https://software.jaos.org/\n" unless $nobanner;
   print $desc_fh "$final_pkg_name:  \n";
   close($desc_fh);
 

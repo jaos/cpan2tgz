@@ -63,15 +63,15 @@ EOF
 
           |-----handy-ruler------------------------------------------------------|
 ${PKGNAME}: ${PKGNAME} - create Slackware packages from CPAN Perl modules
-${PKGNAME}: 
+${PKGNAME}:
 ${PKGNAME}: Packaged by cpan2tgz
-${PKGNAME}: 
+${PKGNAME}:
 ${PKGNAME}: cpan2tgz by Jason Woodward <woodwardj at jaos dot org>
-${PKGNAME}: 
-${PKGNAME}: 
-${PKGNAME}: 
-${PKGNAME}: http://software.jaos.org/
-${PKGNAME}: 
+${PKGNAME}:
+${PKGNAME}:
+${PKGNAME}:
+${PKGNAME}: https://software.jaos.org/
+${PKGNAME}:
 EOF
 	makepkg -l y -c n ../${PKGNAME}-${VERSION}-noarch-1.txz
 )
