@@ -227,7 +227,7 @@ sub do_package
   # this isn't pretty but it gets the job done
   my $pack_dir = $pack->dir();
 
-  system("cd $pack_dir && chown -R root.root .");
+  system("cd $pack_dir && chown -R root:root .");
   system("cd $pack_dir && find . -perm 777 -exec chmod 755 {} \\;");
   system("cd $pack_dir && find . -perm 555 -exec chmod 755 {} \\;");
   system("cd $pack_dir && find . -perm 444 -exec chmod 644 {} \\;");
