@@ -70,6 +70,7 @@ ${PKGNAME}: cpan2tgz by Jason Woodward <woodwardj at jaos dot org>
 ${PKGNAME}:
 ${PKGNAME}:
 ${PKGNAME}:
+${PKGNAME}:
 ${PKGNAME}: https://software.jaos.org/
 ${PKGNAME}:
 EOF
