@@ -6,7 +6,7 @@ PKGNAME=cpan2tgz
 
 perl Makefile.PL
 make
-chown -R root.root .
+chown -R root:root .
 find . -perm 777 -exec chmod 755 {} \;
 find . -perm 555 -exec chmod 755 {} \;
 find . -perm 444 -exec chmod 644 {} \;
