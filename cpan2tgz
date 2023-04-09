@@ -118,7 +118,7 @@ sub do_package
   my $pkg_name = "perl-" . lc((split('/',$module->cpan_file))[-1]);
   my $final_pkg_version = (split('-',$pkg_name))[-1];
   (my $final_pkg_name = $pkg_name) =~ s/\-$final_pkg_version//;
-  $pkg_name =~ s/\.tar.*?$//;
+  $pkg_name =~ s/\.(?:tar.*?|tgz|zip)$//;
 
   # figure out the arch of the package, default to noarch
   my @xs_files = ();
