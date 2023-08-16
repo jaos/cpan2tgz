@@ -244,7 +244,7 @@ sub do_package
 
   # copy documentation to the package build dir
   system("cd $dest_dir && mkdir -p ./usr/doc/$final_pkg_name-" . $module->cpan_version);
-  system("cd $pack_dir && find . -type f -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*' -o -iregex '.*license.*' -o -iregex '.*copying.*' -o -iregex '.*install.*' -o -iregex '.*\.txt' -o -iregex '.*\.html' |xargs -r -iZ cp Z $dest_dir/usr/doc/$final_pkg_name-" . $module->cpan_version . "/");
+  system("cd $pack_dir && find . -type f -iregex '.*readme.*' -o -iregex '.*change.*' -o -iregex '.*todo.*' -o -iregex '.*license.*' -o -iregex '.*copying.*' -o -iregex '.*install.*' -o -iregex '.*\\.txt' -o -iregex '.*\\.html' |xargs -r -iZ cp Z $dest_dir/usr/doc/$final_pkg_name-" . $module->cpan_version . "/");
 
   # build a shell script to fixup the package like Pat's Perl SlackBuild
   open(my $script_fh,">$dest_dir/build.sh") or die "Failed to open build.sh for writing: $!";
