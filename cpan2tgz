@@ -118,7 +118,8 @@ sub do_package
   my $pkg_name = "perl-" . lc((split('/',$module->cpan_file))[-1]);
   my $final_pkg_version = (split('-',$pkg_name))[-1];
   (my $final_pkg_name = $pkg_name) =~ s/\-$final_pkg_version//;
-  $pkg_name =~ s/\.(?:tar.*?|tgz|zip)$//;
+  #$pkg_name =~ s/\.tar.*?$//;
+  $pkg_name =~ s/\.(?:tar.*?|t[xg]z|zip)$//;
 
   # figure out the arch of the package, default to noarch
   my @xs_files = ();
@@ -183,9 +184,22 @@ sub do_package
 
     # get all dependencies
     @deps = grep { $_ && m/\w+/; }
-      grep { ! m/^perl$/ }
-      map { defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
-      map { eval "no warnings 'all'; use $_;"; if ($@) { $_ } }
+      grep { defined $_ && ! m/^perl$/ }
+      map { defined $_ && defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
+      map { if(open(P,"perl \"-M$_\" -e 1 2>&1|")) {
+                 my @result = <P>;
+		 close(P);
+		 print "Check module $_ ";
+                 if(defined $result[0] &&
+                    $result[0] =~ /Can't\s+locate\s+$_/ ) { 
+		    	print "NO\n"; $_; 
+		 } else { 
+			print "OK\n"; undef; 
+		 }
+              } else {
+		 die "Can't exec perl '-m$_'\n";
+              }
+      }
       map { m/requires$/ ? keys %{$deps->{$_}} : $_ }
       keys %{$deps};
 
@@ -302,7 +316,7 @@ SCRIPT
   print $desc_fh "\n";
   print $desc_fh "         |-----handy-ruler------------------------------------------------------|\n";
   print $desc_fh "$final_pkg_name: $final_pkg_name " . $module->cpan_version() . " (Perl module)\n";
-  print $desc_fh "$final_pkg_name:\n";
+  print $desc_fh "$final_pkg_name: $module_name\n";
   print $desc_fh "$final_pkg_name:\n";
   print $desc_fh "$final_pkg_name:\n";
   print $desc_fh "$final_pkg_name:\n";
