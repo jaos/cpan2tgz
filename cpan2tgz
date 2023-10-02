@@ -174,8 +174,8 @@ sub do_package
     my $deps = $pack->prereq_pm();
 
     # only get the deps that are not installed
-    @deps = grep { defined && m/\w+/; }
-      grep { ! m/^perl$/ }
+    @deps = grep { ! m/^perl$/ }
+      grep { defined && m/\w+/; }
       map { defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
       map { m/requires$/ ? keys %{$deps->{$_}} : $_ }
       keys %{$deps};
