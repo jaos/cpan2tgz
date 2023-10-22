@@ -1,7 +1,7 @@
 #!/usr/bin/perl
-# 
-# cpan2tgz - create slackware packages from cpan distributions 
-# 
+#
+# cpan2tgz - create slackware packages from cpan distributions
+#
 # Jason Woodward
 # woodwardj at jaos dot org
 # http://software.jaos.org
@@ -28,7 +28,7 @@ use Getopt::Long;
 use File::Find ();
 use Errno;
 
-our $VERSION = '0.6.8';
+our $VERSION = '0.6.9';
 our $HAS_YAML = 1;
 eval "no warnings 'all'; use YAML;"; if ($@) { $HAS_YAML = 0 }
 
@@ -185,19 +185,19 @@ sub do_package
     @deps = grep { $_ && m/\w+/; }
       grep { defined $_ && ! m/^perl$/ }
       map { defined $_ && defined $PACKAGE_CACHE_LIST{$_} ? undef : $_ }
-      map { if(open(P,"perl \"-M$_\" -e 1 2>&1|")) {
-                 my @result = <P>;
-		 close(P);
-		 print "Check module $_ ";
-                 if(defined $result[0] &&
-                    $result[0] =~ /Can't\s+locate\s+$_/ ) { 
-		    	print "NO\n"; $_; 
-		 } else { 
-			print "OK\n"; undef; 
-		 }
-              } else {
-		 die "Can't exec perl '-m$_'\n";
-              }
+      map {
+        if(open(P,"perl \"-M$_\" -e 1 2>&1|")) {
+          my @result = <P>;
+          close(P);
+          print "Check module $_ ";
+          if(defined $result[0] && $result[0] =~ /Can't\s+locate\s+$_/ ) {
+            print "NO\n"; $_;
+          } else {
+             print "OK\n"; undef;
+          }
+        } else {
+          die "Can't exec perl '-m$_'\n";
+        }
       }
       map { m/requires$/ ? keys %{$deps->{$_}} : $_ }
       keys %{$deps};
@@ -235,7 +235,7 @@ sub do_package
   }
 
   clear_build_dir($dest_dir);
-  
+
   # here we do steps to cleanup source before we build (per LinuxPackages.net perfect packages instructions)
   # this isn't pretty but it gets the job done
   my $pack_dir = $pack->dir();
@@ -294,7 +294,7 @@ SCRIPT
   system("cd $dest_dir && sh build.sh");
   system("cd $dest_dir && rm build.sh");
 
-  
+
   # generate the slack-required file
   open(my $required_fh,">$dest_dir/install/slack-required") or die "Failed to open slack-required for writing: $!";
   print $required_fh "perl\n";
