@@ -315,12 +315,44 @@ SCRIPT
   print $desc_fh "\n";
   print $desc_fh "         |-----handy-ruler------------------------------------------------------|\n";
   print $desc_fh "$final_pkg_name: $final_pkg_name " . $module->cpan_version() . " (Perl module)\n";
+  # description: abstract from META, falling back to the POD NAME section
+  my $abstract = '';
+  eval {
+    require CPAN::Meta;
+    my ($mf) = grep { -f "$pack_dir/$_" } qw(META.json META.yml);
+    $abstract = CPAN::Meta->load_file("$pack_dir/$mf")->abstract if $mf;
+  };
+  $abstract = '' if !defined($abstract) || $abstract eq 'unknown';
+  if (!length($abstract)) {
+    my $pm = $module->id; $pm =~ s{::}{/}g;
+    my ($f) = grep { -f } ("$pack_dir/lib/$pm.pm", "$pack_dir/$pm.pm", "$pack_dir/" . (split m{/}, $pm)[-1] . ".pm");
+    if ($f && open(my $fh, '<', $f)) {
+      local $/; my $t = <$fh>; close($fh);
+      ($abstract) = $t =~ /^=head1\s+NAME\s*\n+\s*\S+\s+-\s+(.+?)\s*\n\s*\n/ms;
+      $abstract = '' unless defined $abstract;
+    }
+  }
+  $abstract =~ s/\s+/ /g;
+  my @dlines;
+  my $cur = '';
+  foreach my $w (split(/\s+/, $abstract)) {
+    if (length($cur) + length($w) + 1 > 68) { push(@dlines, $cur); $cur = $w; }
+    else { $cur = length($cur) ? "$cur $w" : $w; }
+  }
+  push(@dlines, $cur) if length($cur);
+  @dlines = @dlines[0..2] if @dlines > 3;
+  # homepage: META resources, falling back to the metacpan page
+  my $homepage = '';
+  eval {
+    my ($mf) = grep { -f "$pack_dir/$_" } qw(META.json META.yml);
+    $homepage = CPAN::Meta->load_file("$pack_dir/$mf")->resources->{homepage} if $mf;
+  };
+  $homepage = 'https://metacpan.org/pod/' . $module->id unless $homepage;
   print $desc_fh "$final_pkg_name:\n";
+  print $desc_fh "$final_pkg_name: $_\n" foreach @dlines;
   print $desc_fh "$final_pkg_name:\n";
-  print $desc_fh "$final_pkg_name:\n";
-  print $desc_fh "$final_pkg_name:\n";
-  print $desc_fh "$final_pkg_name:\n";
-  print $desc_fh "$final_pkg_name:\n";
+  print $desc_fh "$final_pkg_name: Homepage: $homepage\n";
+  print $desc_fh "$final_pkg_name:\n" foreach (1 .. (3 - @dlines));
   print $desc_fh "$final_pkg_name:  Packaged by cpan2tgz\n" unless $nobanner;
   print $desc_fh "$final_pkg_name:  cpan2tgz by Jason Woodward <woodwardj\@jaos.org>\n" unless $nobanner;
   print $desc_fh "$final_pkg_name:  https://software.jaos.org/\n" unless $nobanner;
