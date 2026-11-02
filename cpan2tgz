@@ -24,8 +24,10 @@ use strict;
 use warnings;
 use Config;
 use CPAN;
+use CPAN::Meta;
 use Getopt::Long;
 use File::Find ();
+use File::Spec ();
 use Errno;
 
 our $VERSION = '0.6.9';
@@ -240,6 +242,19 @@ sub do_package
   # this isn't pretty but it gets the job done
   my $pack_dir = $pack->dir();
 
+  my $homepage = 'https://metacpan.org/pod/' . $module->id;
+  my $description = 'Perl module: ' . $module_name;
+  foreach my $path (File::Spec->catfile($pack_dir, 'META.json'), File::Spec->catfile($pack_dir, 'META.yml')) {
+      if (-e $path) {
+          my $meta = eval { CPAN::Meta->load_file($path) };
+          if ($meta) {
+              $description = $meta->abstract if $meta->abstract && $meta->abstract ne 'unknown';
+              $homepage = $meta->resources->{homepage} if ($meta->resources && $meta->resources->{homepage});
+              last;
+          }
+      }
+  }
+
   system("cd $pack_dir && chown -R root:root .");
   system("cd $pack_dir && find . -perm 777 -exec chmod 755 {} \\;");
   system("cd $pack_dir && find . -perm 555 -exec chmod 755 {} \\;");
@@ -316,9 +331,9 @@ SCRIPT
   print $desc_fh "         |-----handy-ruler------------------------------------------------------|\n";
   print $desc_fh "$final_pkg_name: $final_pkg_name " . $module->cpan_version() . " (Perl module)\n";
   print $desc_fh "$final_pkg_name:\n";
+  print $desc_fh "$final_pkg_name: $description\n";
   print $desc_fh "$final_pkg_name:\n";
-  print $desc_fh "$final_pkg_name:\n";
-  print $desc_fh "$final_pkg_name:\n";
+  print $desc_fh "$final_pkg_name: Homepage: $homepage\n";
   print $desc_fh "$final_pkg_name:\n";
   print $desc_fh "$final_pkg_name:\n";
   print $desc_fh "$final_pkg_name:  Packaged by cpan2tgz\n" unless $nobanner;
